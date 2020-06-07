@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "CommonJS",
+    "strict": true,
+    "alwaysStrict": true,
+    "outDir": "lib",
+    "moduleResolution": "node",
+    "declaration": true,
+    "jsx": "react",
+    "jsxFactory": "Ginny.h"
+  },
+  "include": [
+    "src/index.ts",
+    "src/cli.ts"
+  ]
+}
