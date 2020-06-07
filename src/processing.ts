@@ -39,7 +39,7 @@ ${(await ret.default(pageContext)).text}`;
 
   const html = prettier.format(contentWithDocType, {
     parser: "html",
-    htmlWhitespaceSensitivity: "ignore",
+    htmlWhitespaceSensitivity: "css",
     printWidth: 120,
     tabWidth: 2,
     useTabs: false,
