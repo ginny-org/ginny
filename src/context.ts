@@ -1,6 +1,5 @@
 import { promises } from "fs";
 import { join, dirname } from "path";
-import { PageContext } from ".";
 
 export interface Context {
   packageInfo: PackageInfo;
@@ -52,7 +51,7 @@ async function findFirstPackageJSON(p: string): Promise<PackageJSONResultOk | Pa
   }
 
   try {
-    const json = JSON.parse(await promises.readFile(packageJSONPath, "utf-8")) as any;
+    const json = JSON.parse(await promises.readFile(packageJSONPath, "utf-8")) as PackageInfo["json"];
     return { ok: true, json, path: packageJSONPath };
   } catch (err) {
     return { ok: false, error: `Failed to parse package.json at ${packageJSONPath}: ${err}` };
@@ -68,7 +67,9 @@ async function findFirstPackageJSONPath(p: string): Promise<string | null> {
     if (!stats.isDirectory()) {
       return fullname;
     }
-  } catch (err) {}
+  } catch (err) {
+    err;
+  }
 
   const up = dirname(p);
 

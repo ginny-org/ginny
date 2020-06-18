@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-empty-interface */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-namespace */
 import * as CSS from "csstype";
 import * as PropTypes from "prop-types";
 

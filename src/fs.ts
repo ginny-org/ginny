@@ -1,5 +1,5 @@
 import { promises } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 
 const { readdir, lstat } = promises;
 

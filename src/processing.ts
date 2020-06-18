@@ -5,8 +5,19 @@ import { Context } from "./context";
 import { PageContext } from ".";
 import { Ginny } from "./types";
 
-interface PageImport {
-  default(context: PageContext): Promise<Ginny.Node> | Ginny.Node;
+export interface PageResult {
+  filename: string;
+  content: Promise<Ginny.Node> | Ginny.Node;
+}
+
+export interface MultiPageResult {
+  pages: PageResult[];
+}
+
+export interface PageImport {
+  default(
+    context: PageContext
+  ): Promise<Ginny.Node> | Ginny.Node | PageResult | Promise<PageResult> | MultiPageResult | Promise<MultiPageResult>;
 }
 
 export async function processFile(file: string, context: Context): Promise<void> {
@@ -17,6 +28,24 @@ export async function processFile(file: string, context: Context): Promise<void>
   }
 }
 
+function createPageContext(file: string, context: Context): PageContext {
+  const relpath = relative(dirname(file), context.srcDir);
+
+  return {
+    srcDir: context.srcDir,
+    rootDir: dirname(context.packageInfo.path),
+
+    url(path): string {
+      return join(relpath ?? ".", path);
+    },
+
+    forFile(newFile: string): PageContext {
+      const fullPath = join(dirname(file), newFile);
+      return createPageContext(fullPath, context);
+    }
+  };
+}
+
 async function processTsx(file: string, context: Context): Promise<void> {
   const ret: PageImport = await import(relative(__dirname, file));
 
@@ -24,30 +53,43 @@ async function processTsx(file: string, context: Context): Promise<void> {
     return;
   }
 
-  const relpath = relative(dirname(file), context.srcDir);
+  const pageContext = createPageContext(file, context);
+  const generated = await ret.default(pageContext);
 
-  const pageContext: PageContext = {
-    srcDir: context.srcDir,
-    rootDir: dirname(context.packageInfo.path),
-    url(path): string {
-      return relpath ? join(relpath, path) : `./${path}`;
-    }
-  };
+  const outPages =
+    "text" in generated
+      ? [{ dest: relative(context.srcDir, file), content: generated.text }]
+      : "filename" in generated
+      ? [{ dest: generated.filename, content: (await generated.content).text }]
+      : "pages" in generated
+      ? await Promise.all(
+          generated.pages.map(async (page) => ({ dest: page.filename, content: (await page.content).text }))
+        )
+      : [];
 
-  const contentWithDocType = `<!doctype html>
-${(await ret.default(pageContext)).text}`;
+  await Promise.all(
+    outPages.map(async ({ content, dest }) => {
+      const contentWithDocType = `<!doctype html>
+${content}`;
 
-  const html = prettier.format(contentWithDocType, {
-    parser: "html",
-    htmlWhitespaceSensitivity: "css",
-    printWidth: 120,
-    tabWidth: 2,
-    useTabs: false,
-    singleQuote: false
-  });
+      const html = prettier.format(contentWithDocType, {
+        parser: "html",
+        htmlWhitespaceSensitivity: "css",
+        printWidth: 120,
+        tabWidth: 2,
+        useTabs: false,
+        singleQuote: false
+      });
 
-  const dest = join(context.outDir, relative(context.srcDir, file)).replace(/\.tsx$/, ".html");
-  return promises.writeFile(dest, html, "utf-8");
+      const destPath = join(context.outDir, dest).replace(/\.tsx$/, ".html");
+      const destDir = dirname(destPath);
+
+      await promises.mkdir(destDir, { recursive: true });
+      await promises.writeFile(destPath, html, "utf-8");
+
+      console.log("Created", dest);
+    })
+  );
 }
 
 async function processOther(file: string, context: Context): Promise<void> {

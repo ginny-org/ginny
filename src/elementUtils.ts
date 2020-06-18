@@ -1,5 +1,6 @@
 import { Ginny } from "./types";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function flatten(v: any | any[], ret: any[] = []): Promise<Ginny.Node[]> {
   const resolved = await v;
 

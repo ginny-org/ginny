@@ -22,7 +22,7 @@ export interface h {
     props?: (Ginny.Attributes & P) | null,
     ...children: Ginny.OutputType[]
   ): Ginny.OutputType;
-  <P extends {}>(
+  <P extends unknown>(
     type: FunctionComponent<P>,
     props?: (Ginny.Attributes & P) | null,
     ...children: Ginny.OutputType[]
@@ -63,6 +63,7 @@ function generateAttributeString(props: Ginny.Attributes | null): string {
 
   if (props) {
     for (const attrName in props) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const value = (props as any)[attrName];
 
       const name = attributeName(attrName);
@@ -84,6 +85,7 @@ function attributeName(name: string): string {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function attributeValue(name: string, value: any): string {
   switch (name) {
     case "style":
@@ -93,6 +95,7 @@ function attributeValue(name: string, value: any): string {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatStyle(style: any): string {
   const ret: string[] = [];
 
