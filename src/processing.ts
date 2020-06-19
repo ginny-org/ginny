@@ -1,9 +1,9 @@
 import { join, dirname, relative } from "path";
 import { promises } from "fs";
-import * as prettier from "prettier";
 import { Context } from "./context";
 import { PageContext } from ".";
 import { Ginny } from "./types";
+import * as beautify from "js-beautify";
 
 export interface PageResult {
   filename: string;
@@ -72,13 +72,10 @@ async function processTsx(file: string, context: Context): Promise<void> {
       const contentWithDocType = `<!doctype html>
 ${content}`;
 
-      const html = prettier.format(contentWithDocType, {
-        parser: "html",
-        htmlWhitespaceSensitivity: "css",
-        printWidth: 120,
-        tabWidth: 2,
-        useTabs: false,
-        singleQuote: false
+      const html = beautify.html_beautify(contentWithDocType, {
+        end_with_newline: true,
+        indent_size: 2,
+        indent_with_tabs: false
       });
 
       const destPath = join(context.outDir, dest).replace(/\.tsx$/, ".html");
