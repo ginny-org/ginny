@@ -9,16 +9,16 @@ const watchArgIndex = process.argv.indexOf("--watch");
 if (watchArgIndex !== -1) {
   console.log("Starting ginny in watch mode...\n");
 
-  // Run using ts-node-dev
-  const tsnd = path.join(__dirname, "..", "node_modules", ".bin", "ts-node-dev");
+  const tsNodeDevMain = require.resolve("ts-node-dev");
+  const tsNodeDevBin = path.resolve(path.dirname(tsNodeDevMain), "..", "bin", "ts-node-dev");
 
   const newArgs = process.argv.slice(1);
   newArgs.splice(watchArgIndex - 1, 1);
 
   createContext().then((context) => {
-    newArgs.unshift("--respawn", "--transpileOnly", "--watch", context.srcDir);
+    newArgs.unshift("--respawn", "--transpile-only", "--clear", "--no-notify", "--watch", context.srcDir);
 
-    const child = spawn(tsnd, newArgs, {
+    const child = spawn(tsNodeDevBin, newArgs, {
       cwd: process.cwd(),
       env: process.env,
       stdio: "inherit"

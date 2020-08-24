@@ -3,6 +3,7 @@ import { promises } from "fs";
 import { Context } from "./context";
 import { PageContext } from ".";
 import { Ginny } from "./types";
+import * as log from "./log";
 import * as beautify from "js-beautify";
 
 export interface PageResult {
@@ -21,8 +22,8 @@ export interface PageImport {
 }
 
 export async function processFile(file: string, context: Context): Promise<void> {
-  if (file.endsWith(".tsx")) {
-    return processTsx(file, context);
+  if (file.endsWith(".tsx") || file.endsWith(".jsx")) {
+    return processJsx(file, context);
   } else {
     return processOther(file, context);
   }
@@ -46,10 +47,14 @@ function createPageContext(file: string, context: Context): PageContext {
   };
 }
 
-async function processTsx(file: string, context: Context): Promise<void> {
+async function processJsx(file: string, context: Context): Promise<void> {
+  const relpath = relative(context.srcDir, file);
+  log.prepare(relpath);
+
   const ret: PageImport = await import(relative(__dirname, file));
 
   if (!ret || !ret.default || typeof ret.default !== "function") {
+    log.processed(relpath);
     return;
   }
 
@@ -67,6 +72,10 @@ async function processTsx(file: string, context: Context): Promise<void> {
         )
       : [];
 
+  for (const page of outPages) {
+    log.prepare(page.dest);
+  }
+
   await Promise.all(
     outPages.map(async ({ content, dest }) => {
       const contentWithDocType = `<!doctype html>
@@ -78,21 +87,25 @@ ${content}`;
         indent_with_tabs: false
       });
 
-      const destPath = join(context.outDir, dest).replace(/\.tsx$/, ".html");
+      const destPath = join(context.outDir, dest).replace(/\.[jt]sx$/, ".html");
       const destDir = dirname(destPath);
 
       await promises.mkdir(destDir, { recursive: true });
       await promises.writeFile(destPath, html, "utf-8");
 
-      console.log("Created", dest);
+      log.processed(dest);
     })
   );
 }
 
 async function processOther(file: string, context: Context): Promise<void> {
   if (context.srcDir !== context.outDir) {
+    const relpath = relative(context.srcDir, file);
+    log.prepare(relpath);
+
     const dest = join(context.outDir, relative(context.srcDir, file));
     await promises.mkdir(dirname(dest), { recursive: true });
     await promises.copyFile(file, dest);
+    log.processed(relpath);
   }
 }

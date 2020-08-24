@@ -3,6 +3,7 @@ import { listAllFiles } from "./fs";
 import { promises } from "fs";
 import { create, Context } from "./context";
 import { processFile } from "./processing";
+import * as log from "./log";
 import "ts-node/register/transpile-only";
 
 export { Ginny } from "./types";
@@ -24,7 +25,7 @@ async function runPass(context: Context, options: Options | undefined): Promise<
 
   const all: Promise<void>[] = [];
 
-  console.log("\nStarting build");
+  log.start();
 
   if (options?.files) {
     for (const file of options.files) {
@@ -37,7 +38,7 @@ async function runPass(context: Context, options: Options | undefined): Promise<
   }
 
   await Promise.all(all);
-  console.log("Done\n");
+  log.finish();
 }
 
 declare global {
