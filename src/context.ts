@@ -1,4 +1,4 @@
-import { promises } from "fs";
+import { promises, existsSync } from "fs";
 import { join, dirname } from "path";
 
 export interface Context {
@@ -6,6 +6,8 @@ export interface Context {
   srcDir: string;
   outDir: string;
   generatedFiles: Set<string>;
+  purgecssConfig: string | null;
+  cssNanoConfig: string | null;
 }
 
 interface PackageInfo {
@@ -13,6 +15,7 @@ interface PackageInfo {
 
   json: {
     main?: string;
+    style?: string;
     directories?: {
       lib?: string;
     };
@@ -35,11 +38,16 @@ export async function create(): Promise<Context> {
   const root = join(dirname(packageInfo.path), dirname(packageInfo.json.main));
   const lib = packageInfo.json.directories?.lib;
 
+  const purgecssConfig = join(process.cwd(), "purgecss.config.js");
+  const cssNanoConfig = join(process.cwd(), "cssnano.config.js");
+
   return {
     packageInfo,
     srcDir: root,
     outDir: lib ? join(dirname(packageInfo.path), lib) : root,
-    generatedFiles: new Set<string>()
+    generatedFiles: new Set<string>(),
+    purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,
+    cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null
   };
 }
 

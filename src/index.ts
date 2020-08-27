@@ -4,7 +4,11 @@ import { promises } from "fs";
 import { create, Context } from "./context";
 import { processFile } from "./processing";
 import * as log from "./log";
+import { join } from "path";
+import * as purgecss from "purgecss";
 import "ts-node/register/transpile-only";
+import postcss = require("postcss");
+import * as cssnano from "cssnano";
 
 export { Ginny } from "./types";
 
@@ -17,7 +21,28 @@ export async function ginny(options?: Options): Promise<void> {
     process.exit(1);
   }
 
-  return runPass(context, options);
+  await runPass(context, options);
+
+  if (context.purgecssConfig && context.packageInfo.json.style) {
+    const purger = new purgecss.PurgeCSS();
+    const config = await import(context.purgecssConfig);
+    const ret = await purger.purge({
+      content: [join(context.outDir, "*.html"), join(context.outDir, "**/*.html")],
+      css: [context.packageInfo.json.style],
+      ...config
+    });
+
+    await Promise.all(ret.filter((v) => !!v.file).map(({ file, css }) => promises.writeFile(file ?? "", css)));
+  }
+
+  if (context.cssNanoConfig && context.packageInfo.json.style) {
+    const css = await promises.readFile(context.packageInfo.json.style);
+    const ret = await postcss([cssnano(await import(context.cssNanoConfig))]).process(css, {
+      from: undefined,
+      map: false
+    });
+    await promises.writeFile(context.packageInfo.json.style, ret.css);
+  }
 }
 
 async function runPass(context: Context, options: Options | undefined): Promise<void> {
