@@ -1,10 +1,11 @@
-import { join, dirname, relative } from "path";
+import { join, dirname, relative, basename } from "path";
 import { promises } from "fs";
 import { Context } from "./context";
 import { PageContext } from ".";
 import { Ginny } from "./types";
 import * as log from "./log";
 import * as beautify from "js-beautify";
+import * as sass from "node-sass";
 
 export interface PageResult {
   filename: string;
@@ -22,10 +23,16 @@ export interface PageImport {
 }
 
 export async function processFile(file: string, context: Context): Promise<void> {
-  if (file.endsWith(".tsx") || file.endsWith(".jsx")) {
-    return processJsx(file, context);
-  } else {
-    return processOther(file, context);
+  const extension = file.replace(/.*\./, "");
+
+  switch (extension) {
+    case "tsx":
+    case "jsx":
+      return processJsx(file, context);
+    case "scss":
+      return processScss(file, context);
+    default:
+      return processOther(file, context);
   }
 }
 
@@ -96,6 +103,43 @@ ${content}`;
       log.processed(dest);
     })
   );
+}
+
+async function processScss(file: string, context: Context): Promise<void> {
+  if (basename(file)[0] === "_") {
+    // Ignore partials
+    return;
+  }
+
+  const relpath = relative(context.srcDir, file);
+  log.prepare(relpath);
+
+  const css = await new Promise<string>((resolve, reject) => {
+    sass.render(
+      {
+        file: file
+      },
+      (err, res) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(res.css.toString("utf-8"));
+      }
+    );
+  });
+
+  const outCss = beautify.css_beautify(css, { end_with_newline: true, indent_size: 2, indent_with_tabs: false });
+
+  const dest = relative(context.srcDir, file.replace(/\.scss$/, ".css"));
+  const destPath = join(context.outDir, dest).replace(/\.[jt]sx$/, ".html");
+  const destDir = dirname(destPath);
+
+  await promises.mkdir(destDir, { recursive: true });
+  await promises.writeFile(destPath, outCss, "utf-8");
+
+  log.processed(dest);
 }
 
 async function processOther(file: string, context: Context): Promise<void> {
