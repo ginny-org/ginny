@@ -17,7 +17,7 @@ export async function ginny(options?: Options): Promise<void> {
     process.exit(1);
   }
 
-  runPass(context, options);
+  return runPass(context, options);
 }
 
 async function runPass(context: Context, options: Options | undefined): Promise<void> {
