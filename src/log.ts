@@ -78,6 +78,10 @@ export function finish(): void {
 }
 
 function update(filename: string): void {
+  if (!process.stdout.isTTY) {
+    return;
+  }
+
   const progress = (numTotal ? (numProcessed / numTotal) * 100 : 0).toFixed(0).padStart(3);
 
   beginLine()
