@@ -1,4 +1,5 @@
 import * as ansi from "ansi";
+import * as readline from "readline";
 
 let numTotal = 0;
 let numProcessed = 0;
@@ -73,7 +74,7 @@ export function finish(): void {
     .write(" seconds.\n\n")
     .show();
 
-  process.stdout.clearLine(1);
+  readline.clearLine(process.stdout, 1);
 }
 
 function update(filename: string): void {
@@ -97,7 +98,7 @@ function update(filename: string): void {
     .reset()
     .write(` ${filename}`);
 
-  process.stdout.clearLine(1);
+  readline.clearLine(process.stdout, 1);
 }
 
 function t(): string {
