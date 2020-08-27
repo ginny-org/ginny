@@ -6,6 +6,7 @@ import { Ginny } from "./types";
 import * as log from "./log";
 import * as beautify from "js-beautify";
 import * as sass from "node-sass";
+import { promisify } from "util";
 
 export interface PageResult {
   filename: string;
@@ -114,21 +115,12 @@ async function processScss(file: string, context: Context): Promise<void> {
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);
 
-  const css = await new Promise<string>((resolve, reject) => {
-    sass.render(
-      {
-        file: file
-      },
-      (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(res.css.toString("utf-8"));
-      }
-    );
-  });
+  const css = (
+    await promisify(sass.render)({
+      file: file,
+      includePaths: ["node_modules"]
+    })
+  ).css.toString("utf-8");
 
   const outCss = beautify.css_beautify(css, { end_with_newline: true, indent_size: 2, indent_with_tabs: false });
 
