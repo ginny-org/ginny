@@ -65,9 +65,15 @@ function generateAttributeString(props: Ginny.Attributes | null): string {
     for (const attrName in props) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const value = (props as any)[attrName];
-
       const name = attributeName(attrName);
-      pairs.push(`${name}="${attributeValue(name, value)}"`);
+
+      if (typeof value === "boolean") {
+        if (value) {
+          pairs.push(`${name}`);
+        }
+      } else {
+        pairs.push(`${name}="${attributeValue(name, value)}"`);
+      }
     }
   }
 
