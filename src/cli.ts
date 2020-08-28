@@ -10,7 +10,7 @@ if (watchArgIndex !== -1) {
   console.log("Starting ginny in watch mode...\n");
 
   const tsNodeDevMain = require.resolve("ts-node-dev");
-  const tsNodeDevBin = path.resolve(path.dirname(tsNodeDevMain), "..", "bin", "ts-node-dev");
+  const tsNodeDevBin = path.resolve(path.dirname(tsNodeDevMain), "..", "..", ".bin", "ts-node-dev");
 
   const newArgs = process.argv.slice(1);
   newArgs.splice(watchArgIndex - 1, 1);
