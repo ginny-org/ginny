@@ -1,9 +1,3 @@
-import h from "./h";
-import { listAllFiles } from "./fs";
-import { promises } from "fs";
-import { create, Context } from "./context";
-import { processFile } from "./processing";
-import * as log from "./log";
 import { join } from "path";
 import * as purgecss from "purgecss";
 import "ts-node/register/transpile-only";
@@ -11,7 +5,14 @@ import postcss = require("postcss");
 import * as cssnano from "cssnano";
 import * as autoprefixer from "autoprefixer";
 
+import h from "./h";
+import { listAllFiles } from "./fs";
+import { promises } from "fs";
+import { create, Context } from "./context";
+import * as log from "./log";
+
 export { Ginny } from "./types";
+import * as transformers from "./transformers/index";
 
 export const createContext = create;
 
@@ -55,11 +56,11 @@ async function runPass(context: Context, options: Options | undefined): Promise<
 
   if (options?.files) {
     for (const file of options.files) {
-      all.push(processFile(file, context));
+      all.push(transformers.process(file, context));
     }
   } else {
     for await (const entry of listAllFiles(context.srcDir)) {
-      all.push(processFile(entry, context));
+      all.push(transformers.process(entry, context));
     }
   }
 
