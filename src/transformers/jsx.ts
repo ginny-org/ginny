@@ -6,6 +6,7 @@ import { Context } from "../context";
 import * as log from "../log";
 import { PageContext } from "../index";
 import { Ginny } from "../types";
+import type { TransformResult, Transformer } from ".";
 
 export interface PageResult {
   filename: string;
@@ -26,7 +27,7 @@ export function match(filename: string): boolean {
   return /\.(j|t)sx$/.test(filename);
 }
 
-export async function process(file: string, context: Context): Promise<void> {
+export const process: Transformer = async (file, context): Promise<TransformResult> => {
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);
 
@@ -34,7 +35,7 @@ export async function process(file: string, context: Context): Promise<void> {
 
   if (!ret || !ret.default || typeof ret.default !== "function") {
     log.processed(relpath);
-    return;
+    return {};
   }
 
   const pageContext = createPageContext(file, context);
@@ -75,7 +76,9 @@ ${content}`;
       log.processed(dest);
     })
   );
-}
+
+  return {};
+};
 
 function createPageContext(file: string, context: Context): PageContext {
   const relpath = relative(dirname(file), context.srcDir);

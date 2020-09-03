@@ -1027,6 +1027,8 @@ export namespace Ginny {
     sizes?: string;
     type?: string;
     charSet?: string;
+    imageSizes?: string;
+    imageSrcSet?: string;
   }
 
   export interface MapHTMLAttributes<T> extends HTMLAttributes<T> {

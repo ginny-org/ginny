@@ -1,23 +1,25 @@
-import { Context } from "../context";
 import * as log from "../log";
+import type { Transformer, TransformResult } from "./index";
 
-import { relative, join, dirname } from "path";
+import { relative } from "path";
 import { promises } from "fs";
+import { prepareWriteTarget } from "./support/utils";
 
 export function match(): boolean {
   return true;
 }
 
-export async function process(file: string, context: Context): Promise<void> {
+export const process: Transformer = async (file, context): Promise<TransformResult> => {
   if (context.srcDir === context.outDir) {
-    return;
+    return {};
   }
 
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);
 
-  const dest = join(context.outDir, relative(context.srcDir, file));
-  await promises.mkdir(dirname(dest), { recursive: true });
-  await promises.copyFile(file, dest);
+  const destPath = await prepareWriteTarget(file, context);
+  await promises.copyFile(file, destPath);
+
   log.processed(relpath);
-}
+  return {};
+};

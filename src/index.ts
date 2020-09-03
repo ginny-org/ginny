@@ -13,6 +13,7 @@ import * as log from "./log";
 
 export { Ginny } from "./types";
 import * as transformers from "./transformers/index";
+import { TransformError } from "./transformers/support/error";
 
 export const createContext = create;
 
@@ -50,7 +51,7 @@ export async function ginny(options?: Options): Promise<void> {
 async function runPass(context: Context, options: Options | undefined): Promise<void> {
   await promises.mkdir(context.outDir, { recursive: true });
 
-  const all: Promise<void>[] = [];
+  const all: Promise<transformers.TransformResult>[] = [];
 
   log.start();
 
@@ -64,8 +65,17 @@ async function runPass(context: Context, options: Options | undefined): Promise<
     }
   }
 
-  await Promise.all(all);
+  const errors = (await Promise.all(all)).reduce<TransformError[]>((a, b) => a.concat(b.errors ?? []), []);
+
   log.finish();
+
+  for (const error of errors) {
+    log.error(error.toString());
+  }
+
+  if (errors.length) {
+    process.exit(1);
+  }
 }
 
 declare global {

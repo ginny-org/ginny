@@ -1,40 +1,49 @@
-import { basename, relative, join, dirname } from "path";
+import { basename, relative } from "path";
 import * as sass from "node-sass";
 import * as beautify from "js-beautify";
 
 import * as log from "../log";
-import { Context } from "../context";
+import { prepareWriteTarget } from "./support/utils";
+
 import { promisify } from "util";
 import { promises } from "fs";
+import type { Transformer, TransformResult } from ".";
+import { TransformError } from "./support/error";
 
 export function match(filename: string): boolean {
   return /\.scss$/.test(filename);
 }
 
-export async function process(file: string, context: Context): Promise<void> {
+export const process: Transformer = async (file, context): Promise<TransformResult> => {
   if (basename(file)[0] === "_") {
     // Ignore partials
-    return;
+    return {};
   }
 
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);
 
-  const css = (
-    await promisify(sass.render)({
-      file: file,
-      includePaths: ["node_modules"]
-    })
-  ).css.toString("utf-8");
+  const errors: TransformError[] = [];
 
+  const ret = await promisify(sass.render)({
+    file: file,
+    includePaths: ["node_modules"]
+  }).catch((err: sass.SassError) => {
+    const loc = { line: err.line, col: err.column };
+    errors.push(new TransformError(relpath, { start: loc, end: loc }, err.message));
+    return null;
+  });
+
+  if (!ret) {
+    return { errors };
+  }
+
+  const css = ret.css.toString("utf-8");
   const outCss = beautify.css_beautify(css, { end_with_newline: true, indent_size: 2, indent_with_tabs: false });
 
-  const dest = relative(context.srcDir, file.replace(/\.scss$/, ".css"));
-  const destPath = join(context.outDir, dest);
-  const destDir = dirname(destPath);
-
-  await promises.mkdir(destDir, { recursive: true });
+  const destPath = (await prepareWriteTarget(file, context)).replace(/\.scss$/, ".css");
   await promises.writeFile(destPath, outCss, "utf-8");
 
-  log.processed(dest);
-}
+  log.processed(relpath);
+  return {};
+};

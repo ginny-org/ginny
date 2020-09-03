@@ -47,6 +47,10 @@ function beginLine(): ansi.Cursor {
   return cursor;
 }
 
+export function error(message: string): void {
+  cursor.red().bold().write("ERROR").reset().write(" - ").write(message).write("\n");
+}
+
 export function finish(): void {
   const elapsedSeconds = ((Date.now() - started) / 1000).toFixed(1);
 
