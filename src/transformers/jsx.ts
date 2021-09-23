@@ -32,14 +32,15 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   log.prepare(relpath);
 
   const ret: PageImport = await import(relative(__dirname, file));
+  const func = ret.default;
 
-  if (!ret || !ret.default || typeof ret.default !== "function") {
+  if (!ret || !func || typeof func !== "function") {
     log.processed(relpath);
     return {};
   }
 
   const pageContext = createPageContext(file, context);
-  const generated = await ret.default(pageContext);
+  const generated = await func(pageContext);
 
   const outPages =
     "text" in generated

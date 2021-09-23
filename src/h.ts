@@ -30,7 +30,7 @@ export interface h {
 }
 
 export async function h<P extends Ginny.HTMLAttributes<T>, T extends HTMLElement>(
-  tag: string | FunctionComponent<P>,
+  tag: string | FunctionComponent<P> | { default: FunctionComponent<P> },
   props: (Ginny.Attributes & P) | null,
   ...children: Ginny.OutputType[]
 ): Promise<Ginny.Node | Ginny.Node[] | null> {
@@ -42,6 +42,10 @@ export async function h<P extends Ginny.HTMLAttributes<T>, T extends HTMLElement
 
   if (typeof tag === "function") {
     return tag({ ...(props as Ginny.Attributes & P), children });
+  }
+
+  if (typeof tag === "object") {
+    return tag.default({ ...(props as Ginny.Attributes & P), children });
   }
 
   const attributesString = generateAttributeString(props);

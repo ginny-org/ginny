@@ -1,7 +1,7 @@
 import { join } from "path";
 import * as purgecss from "purgecss";
-import "ts-node/register/transpile-only";
-import postcss = require("postcss");
+import "./register";
+import postcss from "postcss";
 import * as cssnano from "cssnano";
 import * as autoprefixer from "autoprefixer";
 
@@ -40,7 +40,7 @@ export async function ginny(options?: Options): Promise<void> {
 
   if (context.cssNanoConfig && context.packageInfo.json.style) {
     const css = await promises.readFile(context.packageInfo.json.style);
-    const ret = await postcss([cssnano(await import(context.cssNanoConfig)), autoprefixer()]).process(css, {
+    const ret = await postcss([cssnano(await import(context.cssNanoConfig)) as any, autoprefixer()]).process(css, {
       from: undefined,
       map: false
     });
@@ -99,4 +99,8 @@ export interface Options {
   files?: string[];
 }
 
-export default ginny;
+export default (opts?: Options): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => ginny(opts).then(resolve, reject), 0);
+  });
+};

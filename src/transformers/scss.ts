@@ -1,5 +1,5 @@
 import { basename, relative } from "path";
-import * as sass from "node-sass";
+import * as sass from "sass";
 import * as beautify from "js-beautify";
 
 import * as log from "../log";
@@ -28,7 +28,7 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   const ret = await promisify(sass.render)({
     file: file,
     includePaths: ["node_modules"]
-  }).catch((err: sass.SassError) => {
+  }).catch((err: sass.SassException) => {
     const loc = { line: err.line, col: err.column };
     errors.push(new TransformError(relpath, { start: loc, end: loc }, err.message));
     return null;
