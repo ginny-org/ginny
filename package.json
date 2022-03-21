@@ -1,6 +1,6 @@
 {
   "name": "ginny",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Simple static website generator",
   "repository": {
     "url": "https://gitlab.com/jessevdk/ginny"
