@@ -30,8 +30,13 @@ export async function ginny(options?: Options): Promise<void> {
     const purger = new purgecss.PurgeCSS();
     const config = await import(context.purgecssConfig);
     const ret = await purger.purge({
-      content: [join(context.outDir, "*.html"), join(context.outDir, "**/*.html")],
-      css: [context.packageInfo.json.style],
+      content: [
+        join(context.outDir, "*.html"),
+        join(context.outDir, "**/*.html"),
+        join(context.outDir, "**/*.js"),
+        join(context.outDir, "*.js")
+      ],
+      css: [join(context.outDir, "*.css"), join(context.outDir, "**/*.css")],
       ...config
     });
 
