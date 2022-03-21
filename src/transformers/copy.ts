@@ -4,6 +4,7 @@ import type { Transformer, TransformResult } from "./index";
 import { relative } from "path";
 import { promises } from "fs";
 import { prepareWriteTarget } from "./support/utils";
+import { createDependencyRecorder } from "../dependencies";
 
 export function match(): boolean {
   return true;
@@ -13,6 +14,8 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   if (context.srcDir === context.outDir) {
     return {};
   }
+
+  createDependencyRecorder(file);
 
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);

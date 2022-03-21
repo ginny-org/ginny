@@ -71,7 +71,7 @@ export function finish(): void {
     .bold()
     .write(`${numTotal}`)
     .reset()
-    .write(` file${numTotal > 1 ? "s" : ""} in `)
+    .write(` file${numTotal !== 1 ? "s" : ""} in `)
     .bold()
     .write(elapsedSeconds)
     .reset()

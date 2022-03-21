@@ -3,6 +3,7 @@ import * as sass from "sass";
 import * as beautify from "js-beautify";
 
 import * as log from "../log";
+import { createDependencyRecorder } from "../dependencies";
 import { prepareWriteTarget } from "./support/utils";
 
 import { promisify } from "util";
@@ -24,21 +25,31 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   log.prepare(relpath);
 
   const errors: TransformError[] = [];
+  const recorder = createDependencyRecorder(file);
 
-  const ret = await promisify(sass.render)({
-    file: file,
-    includePaths: ["node_modules"]
-  }).catch((err: sass.SassException) => {
-    const loc = { line: err.line, col: err.column };
-    errors.push(new TransformError(relpath, { start: loc, end: loc }, err.message));
-    return null;
-  });
+  const importer: sass.FileImporter<"async"> = {
+    findFileUrl(url) {
+      recorder.record(url);
+      return null;
+    }
+  };
+
+  const ret = await sass
+    .compileAsync(file, {
+      loadPaths: ["node_modules"],
+      importers: [importer]
+    })
+    .catch((err: sass.Exception) => {
+      const loc = { line: err.span.start.line, col: err.span.start.column };
+      errors.push(new TransformError(relpath, { start: loc, end: loc }, err.message));
+      return null;
+    });
 
   if (!ret) {
     return { errors };
   }
 
-  const css = ret.css.toString("utf-8");
+  const css = ret.css;
   const outCss = beautify.css_beautify(css, { end_with_newline: true, indent_size: 2, indent_with_tabs: false });
 
   const destPath = (await prepareWriteTarget(file, context)).replace(/\.scss$/, ".css");

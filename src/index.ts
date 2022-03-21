@@ -73,7 +73,7 @@ async function runPass(context: Context, options: Options | undefined): Promise<
     log.error(error.toString());
   }
 
-  if (errors.length) {
+  if (errors.length && !options?.watch) {
     process.exit(1);
   }
 }
@@ -97,6 +97,7 @@ export interface PageContext {
 
 export interface Options {
   files?: string[];
+  watch?: boolean;
 }
 
 export default (opts?: Options): Promise<void> => {

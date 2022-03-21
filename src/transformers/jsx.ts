@@ -7,6 +7,8 @@ import * as log from "../log";
 import { PageContext } from "../index";
 import { Ginny } from "../types";
 import type { TransformResult, Transformer } from ".";
+import { addHook } from "pirates";
+import { createDependencyRecorder } from "../dependencies";
 
 export interface PageResult {
   filename: string;
@@ -31,6 +33,24 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   const relpath = relative(context.srcDir, file);
   log.prepare(relpath);
 
+  const recorder = createDependencyRecorder(file);
+
+  const revertHook = addHook((code) => code, {
+    exts: [".ts", ".tsx", ".jsx"],
+    matcher: (filename) => {
+      recorder.record(filename);
+      return false;
+    }
+  });
+
+  try {
+    return await run(file, relpath, context);
+  } finally {
+    revertHook();
+  }
+};
+
+async function run(file: string, relpath: string, context: Context): Promise<TransformResult> {
   const ret: PageImport = await import(relative(__dirname, file));
   const func = ret.default;
 
@@ -44,7 +64,7 @@ export const process: Transformer = async (file, context): Promise<TransformResu
 
   const outPages =
     "text" in generated
-      ? [{ dest: relative(context.srcDir, file), content: generated.text }]
+      ? [{ dest: relpath, content: generated.text }]
       : "filename" in generated
       ? [{ dest: generated.filename, content: (await generated.content).text }]
       : "pages" in generated
@@ -53,8 +73,10 @@ export const process: Transformer = async (file, context): Promise<TransformResu
         )
       : [];
 
-  for (const page of outPages) {
-    log.prepare(page.dest);
+  if ("pages" in generated) {
+    for (const page of outPages) {
+      log.prepare(page.dest);
+    }
   }
 
   await Promise.all(
@@ -74,12 +96,15 @@ ${content}`;
       await promises.mkdir(destDir, { recursive: true });
       await promises.writeFile(destPath, html, "utf-8");
 
-      log.processed(dest);
+      if ("pages" in generated) {
+        log.processed(dest);
+      }
     })
   );
 
+  log.processed(relpath);
   return {};
-};
+}
 
 function createPageContext(file: string, context: Context): PageContext {
   const relpath = relative(dirname(file), context.srcDir);
