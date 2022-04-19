@@ -1,4 +1,4 @@
-import { relative, join, dirname } from "path";
+import { relative, join, dirname, resolve } from "path";
 import { promises } from "fs";
 import * as beautify from "js-beautify";
 
@@ -9,6 +9,8 @@ import { Ginny } from "../types";
 import type { TransformResult, Transformer } from ".";
 import { addHook } from "pirates";
 import { createDependencyRecorder } from "../dependencies";
+import { result, Result, UnwrapPromise } from "../asyncUtils";
+import { TransformError } from "./support/error";
 
 export interface PageResult {
   filename: string;
@@ -50,17 +52,50 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   }
 };
 
-async function run(file: string, relpath: string, context: Context): Promise<TransformResult> {
-  const ret: PageImport = await import(relative(__dirname, file));
-  const func = ret.default;
+function makeErrorResult(filename: string, error: any): TransformResult {
+  if (error instanceof TypeError) {
+    const stack = error.stack?.toString();
+    let location = { line: 0, col: 0 };
+    let message = error.message.toString();
 
-  if (!ret || !func || typeof func !== "function") {
+    if (stack) {
+      const m = stack.match(/at (.*)\((.*?):([\d]+):([\d]+)\)/);
+
+      if (m && m[2].endsWith(filename)) {
+        location = { line: parseInt(m[3], 10), col: parseInt(m[4], 10) };
+        message = `at ${m[1].trim()}: ${message}`;
+      }
+    }
+
+    return { errors: [new TransformError(filename, { start: location, end: location }, message)] };
+  }
+
+  const location = { line: 0, col: 0 };
+  return { errors: [new TransformError(filename, { start: location, end: location }, error.message.toString())] };
+}
+
+async function run(file: string, relpath: string, context: Context): Promise<TransformResult> {
+  const ret: Result<PageImport> = await result(import(relative(__dirname, file)));
+
+  if (!ret.ok) {
+    return makeErrorResult(file, ret.error);
+  }
+
+  const func = ret.value.default;
+
+  if (!ret.value || !func || typeof func !== "function") {
     log.processed(relpath);
     return {};
   }
 
   const pageContext = createPageContext(file, context);
-  const generated = await func(pageContext);
+  let generated: UnwrapPromise<ReturnType<typeof func>>;
+
+  try {
+    generated = await func(pageContext);
+  } catch (err) {
+    return makeErrorResult(file, err);
+  }
 
   const outPages =
     "text" in generated

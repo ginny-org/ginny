@@ -53,7 +53,8 @@ function scheduleRun(files: string[] | undefined): void {
     return;
   }
 
-  running = running.then(() => ginny({ files, watch: true }));
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  running = running.then(() => ginny({ files, watch: true }).catch(() => {}));
 }
 
 async function runBuild(): Promise<void> {

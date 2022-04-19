@@ -20,10 +20,6 @@ export const createContext = create;
 export async function ginny(options?: Options): Promise<void> {
   const context = await create();
 
-  if (!context) {
-    process.exit(1);
-  }
-
   await runPass(context, options);
 
   if (context.purgecssConfig && context.packageInfo.json.style) {
