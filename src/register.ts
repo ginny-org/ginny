@@ -1,8 +1,9 @@
 import { default as register, InputOptions } from "@swc/register/lib/node";
+import "source-map-support/register";
 
 const opts: InputOptions = {
   extensions: [".ts", ".tsx", ".jsx"],
-  sourceMaps: false,
+  sourceMaps: true,
   jsc: {
     parser: {
       syntax: "typescript",
