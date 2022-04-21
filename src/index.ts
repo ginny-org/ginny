@@ -1,4 +1,4 @@
-import { join } from "path";
+import { dirname, join, relative } from "path";
 import * as purgecss from "purgecss";
 import "./register";
 import postcss from "postcss";
@@ -16,7 +16,7 @@ import * as transformers from "./transformers/index";
 import { process as processCopy } from "./transformers/copy";
 import { TransformError } from "./transformers/support/error";
 import { isMatch } from "micromatch";
-import { getEntries } from "./dependencies";
+import { getEntries, getRelations } from "./dependencies";
 
 export const createContext = create;
 
@@ -56,6 +56,10 @@ async function runPass(context: Context, options: Options | undefined): Promise<
   await promises.mkdir(context.outDir, { recursive: true });
 
   const all: Promise<transformers.TransformResult>[] = [];
+
+  if (options?.dependencyGraph) {
+    log.silence(true);
+  }
 
   log.start();
 
@@ -109,6 +113,45 @@ async function runPass(context: Context, options: Options | undefined): Promise<
   if (errors.length && !options?.watch) {
     process.exit(1);
   }
+
+  if (options?.dependencyGraph) {
+    const relations = getRelations();
+
+    console.log("digraph dependencies {");
+    const rootDir = dirname(context.packageInfo.path);
+
+    const nodes = new Map<string, string>();
+
+    const ensureNode = (filename: string) => {
+      const existing = nodes.get(filename);
+
+      if (existing) {
+        return;
+      }
+
+      const name = `n${nodes.size}`;
+      nodes.set(filename, name);
+    };
+
+    for (const [from, to] of relations) {
+      ensureNode(from);
+      ensureNode(to);
+    }
+
+    nodes.forEach((node, label) => {
+      console.log(`  ${node} [label="${relative(rootDir, label)}"];`);
+    });
+
+    console.log("");
+
+    for (const [from, to] of relations) {
+      const fromNode = nodes.get(from);
+      const toNode = nodes.get(to);
+      console.log(`  ${fromNode} -> ${toNode};`);
+    }
+
+    console.log("}");
+  }
 }
 
 function isIgnored(file: string, context: Context): boolean {
@@ -146,6 +189,7 @@ export interface PageContext {
 export interface Options {
   files?: string[];
   watch?: boolean;
+  dependencyGraph?: boolean;
 }
 
 export default (opts?: Options): Promise<void> => {

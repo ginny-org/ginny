@@ -5,6 +5,7 @@ import { join, dirname } from "path";
 export interface Context {
   packageInfo: PackageInfo;
   srcDir: string;
+  rootDir: string;
   outDir: string;
   generatedFiles: Set<string>;
   purgecssConfig: string | null;
@@ -53,6 +54,7 @@ export async function create(options: { isWatch: boolean }): Promise<Context> {
   return {
     packageInfo,
     srcDir: root,
+    rootDir: dirname(packageInfo.path),
     outDir: lib ? join(dirname(packageInfo.path), lib) : root,
     ignoreGlobs,
     generatedFiles: new Set<string>(),

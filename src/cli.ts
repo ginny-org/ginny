@@ -3,7 +3,7 @@
 import ginny from ".";
 import { watch } from "chokidar";
 import { create } from "./context";
-import { getEntries } from "./dependencies";
+import { markChanged } from "./dependencies";
 
 async function run(): Promise<void> {
   const watchArgIndex = process.argv.indexOf("--watch");
@@ -11,9 +11,18 @@ async function run(): Promise<void> {
   if (watchArgIndex !== -1) {
     process.argv.splice(watchArgIndex, 1);
     await runWatch();
-  } else {
-    await runBuild();
+    return;
   }
+
+  const dependencyGraphIndex = process.argv.indexOf("--dependency-graph");
+
+  if (dependencyGraphIndex !== -1) {
+    process.argv.splice(watchArgIndex, 1);
+    await runDependencyGraph();
+    return;
+  }
+
+  await runBuild();
 }
 
 async function runWatch(): Promise<void> {
@@ -23,8 +32,7 @@ async function runWatch(): Promise<void> {
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });
 
   watcher.on("add", (file) => {
-    delete require.cache[file];
-    const entries = getEntries(file);
+    const entries = markChanged(file);
 
     if (file.startsWith(context.srcDir) && !entries.includes(file)) {
       entries.push(file);
@@ -33,15 +41,8 @@ async function runWatch(): Promise<void> {
     scheduleRun(entries);
   });
 
-  watcher.on("change", (file) => {
-    delete require.cache[file];
-    scheduleRun(getEntries(file));
-  });
-
-  watcher.on("unlink", (file) => {
-    delete require.cache[file];
-    scheduleRun(getEntries(file));
-  });
+  watcher.on("change", (file) => scheduleRun(markChanged(file)));
+  watcher.on("unlink", (file) => scheduleRun(markChanged(file)));
 
   scheduleRun(process.argv.length > 2 ? process.argv.slice(2) : undefined);
 }
@@ -55,6 +56,13 @@ function scheduleRun(files: string[] | undefined): void {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   running = running.then(() => ginny({ files, watch: true }).catch(() => {}));
+}
+
+async function runDependencyGraph(): Promise<void> {
+  return ginny({
+    files: process.argv.length > 2 ? process.argv.slice(2) : undefined,
+    dependencyGraph: true
+  });
 }
 
 async function runBuild(): Promise<void> {

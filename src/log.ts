@@ -4,10 +4,19 @@ import * as readline from "readline";
 let numTotal = 0;
 let numProcessed = 0;
 let started = 0;
+let silenced = false;
 
 const cursor = ansi(process.stdout);
 
+export function silence(silent: boolean): void {
+  silenced = silent;
+}
+
 export function start(): void {
+  if (silenced) {
+    return;
+  }
+
   numTotal = 0;
   numProcessed = 0;
   started = Date.now();
@@ -48,10 +57,18 @@ function beginLine(): ansi.Cursor {
 }
 
 export function error(message: string): void {
+  if (silenced) {
+    return;
+  }
+
   cursor.red().bold().write("ERROR").reset().write(" - ").write(message).write("\n");
 }
 
 export function finish(): void {
+  if (silenced) {
+    return;
+  }
+
   const elapsedSeconds = ((Date.now() - started) / 1000).toFixed(1);
 
   beginLine()
@@ -82,7 +99,7 @@ export function finish(): void {
 }
 
 function update(filename: string): void {
-  if (!process.stdout.isTTY) {
+  if (!process.stdout.isTTY || silenced) {
     return;
   }
 

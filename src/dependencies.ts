@@ -1,19 +1,63 @@
+import * as Module from "module";
+import { Context } from "./context";
+
+const moduleInternal = Module as unknown as ModuleInternal;
+
 const dependencyToEntries = new Map<string, Set<string>>();
 const entryToDependencies = new Map<string, Set<string>>();
 
-export function createDependencyRecorder(entry: string): DependencyRecorder {
-  clearDependencies(entry);
+export function record(entry: string, dependency: string, context: Context): void {
+  if (
+    isExternal(entry) ||
+    isExternal(dependency) ||
+    !entry.startsWith(context.rootDir) ||
+    !dependency.startsWith(context.rootDir) ||
+    entry === dependency
+  ) {
+    return;
+  }
 
-  const dependencies = new Set([entry]);
-  entryToDependencies.set(entry, dependencies);
-  dependencyToEntries.set(entry, new Set([entry]));
+  ensureEntryToDependencies(entry).add(dependency);
+  ensureDependencyToEntries(dependency).add(entry);
+}
 
-  return {
-    record(file: string): void {
-      dependencies.add(file);
-      ensureDependencyToEntry(file).add(entry);
+export function markChanged(file: string): string[] {
+  clearRequireCache(file);
+
+  // Collect top-level files that transitively depend on this file
+  const toplevel = new Set<string>();
+  getToplevelDependents(file, toplevel);
+
+  // Delete dependencies for this file
+  entryToDependencies.get(file)?.forEach((dependency) => {
+    dependencyToEntries.get(dependency)?.delete(file);
+  });
+
+  return Array.from(toplevel.values());
+}
+
+function getToplevelDependents(file: string, out: Set<string>): void {
+  const entries = dependencyToEntries.get(file);
+
+  if (!entries || entries.size === 0) {
+    out.add(file);
+    return;
+  }
+
+  entries.forEach((entry) => getToplevelDependents(entry, out));
+}
+
+function clearRequireCache(file: string): void {
+  delete require.cache[file];
+
+  // Walk dependency tree up-wards and clear require cache
+  const entries = dependencyToEntries.get(file);
+
+  entries?.forEach((entry) => {
+    if (entry !== file) {
+      clearRequireCache(entry);
     }
-  };
+  });
 }
 
 export function getEntries(dependency: string): string[] {
@@ -21,7 +65,59 @@ export function getEntries(dependency: string): string[] {
   return entries ? Array.from(entries) : [];
 }
 
-function ensureDependencyToEntry(dependency: string): Set<string> {
+export function register(context: Context): void {
+  if (++numRegistered !== 1) {
+    return;
+  }
+
+  moduleInternal._load = function (request, parent): unknown {
+    const localPath = moduleInternal._resolveFilename(request, parent);
+
+    if (localPath) {
+      record(parent.filename, localPath, context);
+    }
+
+    return originalLoad.call(this, request, parent);
+  };
+}
+
+export function unregister(): void {
+  if (numRegistered === 0) {
+    return;
+  }
+
+  if (--numRegistered === 0) {
+    moduleInternal._load = originalLoad;
+  }
+}
+
+export function getRelations(): [string, string][] {
+  const ret: [string, string][] = [];
+
+  entryToDependencies.forEach((dependencies, entry) =>
+    dependencies.forEach((dependency) => {
+      if (entry !== dependency) {
+        ret.push([entry, dependency]);
+      }
+    })
+  );
+
+  return ret;
+}
+
+function ensureEntryToDependencies(entry: string): Set<string> {
+  const existing = entryToDependencies.get(entry);
+
+  if (!existing) {
+    const dependencies = new Set([entry]);
+    entryToDependencies.set(entry, dependencies);
+    return dependencies;
+  }
+
+  return existing;
+}
+
+function ensureDependencyToEntries(dependency: string): Set<string> {
   const existing = dependencyToEntries.get(dependency);
 
   if (existing) {
@@ -33,20 +129,20 @@ function ensureDependencyToEntry(dependency: string): Set<string> {
   return entries;
 }
 
-function clearDependencies(entry: string): void {
-  const existing = entryToDependencies.get(entry);
+const originalLoad = moduleInternal._load;
+let numRegistered = 0;
 
-  if (existing == null) {
-    return;
-  }
-
-  for (const dependency of existing) {
-    dependencyToEntries.delete(dependency);
-  }
-
-  entryToDependencies.delete(entry);
-}
+const isExternal = (s: string): boolean => /[/\\]node_modules[/\\]/.test(s);
 
 export interface DependencyRecorder {
   record(file: string): void;
+}
+
+interface ModuleInternal {
+  _load(request: string, parent: Parent): unknown;
+  _resolveFilename(filename: string, parent: Parent): string;
+}
+
+interface Parent {
+  filename: string;
 }
