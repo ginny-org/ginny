@@ -14,7 +14,7 @@ interface ResultOk<T> {
 
 interface ResultError {
   ok: false;
-  error: any;
+  error: Error;
 }
 
 export type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;

@@ -1,5 +1,5 @@
 import * as log from "../log";
-import { relative, basename } from "path";
+import { relative } from "path";
 import { promises } from "fs";
 import { prepareWriteTarget } from "./support/utils";
 import type { TransformResult, Transformer } from ".";

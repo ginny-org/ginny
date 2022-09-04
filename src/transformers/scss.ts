@@ -6,7 +6,6 @@ import * as log from "../log";
 import { createDependencyRecorder } from "../dependencies";
 import { prepareWriteTarget } from "./support/utils";
 
-import { promisify } from "util";
 import { promises } from "fs";
 import type { Transformer, TransformResult } from ".";
 import { TransformError } from "./support/error";
