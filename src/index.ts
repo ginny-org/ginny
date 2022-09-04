@@ -14,6 +14,7 @@ import * as log from "./log";
 export { Ginny } from "./types";
 import * as transformers from "./transformers/index";
 import { TransformError } from "./transformers/support/error";
+import { isMatch } from "micromatch";
 
 export const createContext = create;
 
@@ -58,11 +59,15 @@ async function runPass(context: Context, options: Options | undefined): Promise<
 
   if (options?.files) {
     for (const file of options.files) {
-      all.push(transformers.process(file, context));
+      if (!isIgnored(file, context)) {
+        all.push(transformers.process(file, context));
+      }
     }
   } else {
-    for await (const entry of listAllFiles(context.srcDir)) {
-      all.push(transformers.process(entry, context));
+    for await (const file of listAllFiles(context.srcDir)) {
+      if (!isIgnored(file, context)) {
+        all.push(transformers.process(file, context));
+      }
     }
   }
 
@@ -77,6 +82,18 @@ async function runPass(context: Context, options: Options | undefined): Promise<
   if (errors.length && !options?.watch) {
     process.exit(1);
   }
+}
+
+function isIgnored(file: string, context: Context): boolean {
+  return isMatch(srcDirRelative(file, context), context.ignoreGlobs, { dot: true });
+}
+
+function srcDirRelative(file: string, context: Context): string {
+  if (file.startsWith(context.srcDir)) {
+    return file.slice(context.srcDir.length + 1);
+  }
+
+  return file;
 }
 
 declare global {

@@ -1,4 +1,5 @@
 import { promises, existsSync } from "fs";
+import { readFile } from "fs/promises";
 import { join, dirname } from "path";
 
 export interface Context {
@@ -8,6 +9,7 @@ export interface Context {
   generatedFiles: Set<string>;
   purgecssConfig: string | null;
   cssNanoConfig: string | null;
+  ignoreGlobs: string[];
 }
 
 interface PackageInfo {
@@ -41,10 +43,17 @@ export async function create(): Promise<Context> {
   const purgecssConfig = join(process.cwd(), "purgecss.config.js");
   const cssNanoConfig = join(process.cwd(), "cssnano.config.js");
 
+  const ignoreGlobs = (await readFile(join(root, ".ginnyignore"), { encoding: "utf-8" }).catch(() => ""))
+    .split("\n")
+    .filter((v) => !!v);
+
+  ignoreGlobs.push(".ginnyignore");
+
   return {
     packageInfo,
     srcDir: root,
     outDir: lib ? join(dirname(packageInfo.path), lib) : root,
+    ignoreGlobs,
     generatedFiles: new Set<string>(),
     purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,
     cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null
