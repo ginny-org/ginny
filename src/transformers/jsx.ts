@@ -1,4 +1,4 @@
-import { relative, join, dirname, resolve } from "path";
+import { relative, join, dirname } from "path";
 import { promises } from "fs";
 import * as beautify from "js-beautify";
 
@@ -8,7 +8,7 @@ import { PageContext } from "../index";
 import { Ginny } from "../types";
 import type { TransformResult, Transformer } from ".";
 import { addHook } from "pirates";
-import { createDependencyRecorder } from "../dependencies";
+import { createDependencyRecorder, DependencyRecorder } from "../dependencies";
 import { result, Result, UnwrapPromise } from "../asyncUtils";
 import { TransformError } from "./support/error";
 
@@ -46,13 +46,13 @@ export const process: Transformer = async (file, context): Promise<TransformResu
   });
 
   try {
-    return await run(file, relpath, context);
+    return await run(file, relpath, context, recorder);
   } finally {
     revertHook();
   }
 };
 
-function makeErrorResult(filename: string, error: any): TransformResult {
+function makeErrorResult(filename: string, error: Error): TransformResult {
   if (error instanceof TypeError) {
     const stack = error.stack?.toString();
     let location = { line: 0, col: 0 };
@@ -74,7 +74,12 @@ function makeErrorResult(filename: string, error: any): TransformResult {
   return { errors: [new TransformError(filename, { start: location, end: location }, error.message.toString())] };
 }
 
-async function run(file: string, relpath: string, context: Context): Promise<TransformResult> {
+async function run(
+  file: string,
+  relpath: string,
+  context: Context,
+  dependencyRecorder: DependencyRecorder
+): Promise<TransformResult> {
   const ret: Result<PageImport> = await result(import(relative(__dirname, file)));
 
   if (!ret.ok) {
@@ -88,13 +93,13 @@ async function run(file: string, relpath: string, context: Context): Promise<Tra
     return {};
   }
 
-  const pageContext = createPageContext(file, context);
+  const pageContext = createPageContext(file, context, dependencyRecorder);
   let generated: UnwrapPromise<ReturnType<typeof func>>;
 
   try {
     generated = await func(pageContext);
   } catch (err) {
-    return makeErrorResult(file, err);
+    return makeErrorResult(file, err as Error);
   }
 
   const outPages =
@@ -141,12 +146,13 @@ ${content}`;
   return {};
 }
 
-function createPageContext(file: string, context: Context): PageContext {
+function createPageContext(file: string, context: Context, dependencyRecorder: DependencyRecorder): PageContext {
   const relpath = relative(dirname(file), context.srcDir);
 
   return {
     srcDir: context.srcDir,
     rootDir: dirname(context.packageInfo.path),
+    addDependency: (file) => dependencyRecorder.record(file),
 
     url(path): string {
       return join(relpath ?? ".", path);
@@ -154,7 +160,7 @@ function createPageContext(file: string, context: Context): PageContext {
 
     forFile(newFile: string): PageContext {
       const fullPath = join(dirname(file), newFile);
-      return createPageContext(fullPath, context);
+      return createPageContext(fullPath, context, dependencyRecorder);
     }
   };
 }

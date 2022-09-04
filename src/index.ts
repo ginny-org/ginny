@@ -111,6 +111,7 @@ export interface PageContext {
 
   url(path: string): string;
   forFile(file: string): PageContext;
+  addDependency(file: string): void;
 }
 
 export interface Options {
