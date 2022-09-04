@@ -9,7 +9,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w",
+    "start": "tsc -w",
     "prepublishOnly": "npm run build"
   },
   "bin": {
