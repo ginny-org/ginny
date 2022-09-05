@@ -3,7 +3,7 @@
   "version": "0.0.17",
   "description": "Simple static website generator",
   "repository": {
-    "url": "https://gitlab.com/jessevdk/ginny"
+    "url": "https://github.com/jessevdk/ginny"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
