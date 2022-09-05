@@ -42,7 +42,7 @@ export async function ginny(options?: Options): Promise<void> {
 
   if (context.cssNanoConfig && context.packageInfo.json.style) {
     const css = await promises.readFile(context.packageInfo.json.style);
-    const ret = await postcss([cssnano(await import(context.cssNanoConfig)) as any, autoprefixer()]).process(css, {
+    const ret = await postcss([cssnano(await import(context.cssNanoConfig)), autoprefixer()]).process(css, {
       from: undefined,
       map: false
     });
