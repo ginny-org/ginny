@@ -6,10 +6,6 @@ import { promises } from "fs";
 import { prepareWriteTarget } from "./support/utils";
 import { createDependencyRecorder } from "../dependencies";
 
-export function match(): boolean {
-  return true;
-}
-
 export const process: Transformer = async (file, context): Promise<TransformResult> => {
   if (context.srcDir === context.outDir) {
     return {};

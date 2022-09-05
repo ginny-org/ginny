@@ -13,13 +13,15 @@ import * as log from "./log";
 
 export { Ginny } from "./types";
 import * as transformers from "./transformers/index";
+import { process as processCopy } from "./transformers/copy";
 import { TransformError } from "./transformers/support/error";
 import { isMatch } from "micromatch";
+import { getEntries } from "./dependencies";
 
 export const createContext = create;
 
 export async function ginny(options?: Options): Promise<void> {
-  const context = await create();
+  const context = await create({ isWatch: !!options?.watch });
 
   await runPass(context, options);
 
@@ -57,17 +59,42 @@ async function runPass(context: Context, options: Options | undefined): Promise<
 
   log.start();
 
+  const noTransformFiles: string[] = [];
+
+  const tryTransform = async (file: string, context: Context): Promise<transformers.TransformResult> => {
+    try {
+      return await transformers.process(file, context);
+    } catch (err) {
+      if (err instanceof transformers.NoTransformerError) {
+        noTransformFiles.push(file);
+        return {};
+      } else {
+        throw err;
+      }
+    }
+  };
+
   if (options?.files) {
     for (const file of options.files) {
       if (!isIgnored(file, context)) {
-        all.push(transformers.process(file, context));
+        all.push(tryTransform(file, context));
       }
     }
   } else {
     for await (const file of listAllFiles(context.srcDir)) {
       if (!isIgnored(file, context)) {
-        all.push(transformers.process(file, context));
+        all.push(tryTransform(file, context));
       }
+    }
+  }
+
+  // Wait for all known transformers to finish. Files may be registered as dependencies during
+  // transform which will be ignored for the default copy handler.
+  await Promise.all(all);
+
+  for (const file of noTransformFiles) {
+    if (!isIgnored(file, context) && getEntries(file).length === 0) {
+      all.push(processCopy(file, context));
     }
   }
 
@@ -108,6 +135,8 @@ declare global {
 export interface PageContext {
   srcDir: string;
   rootDir: string;
+
+  isDevelopment: boolean;
 
   url(path: string): string;
   forFile(file: string): PageContext;
