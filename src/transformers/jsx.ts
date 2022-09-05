@@ -152,6 +152,8 @@ function createPageContext(file: string, context: Context, dependencyRecorder: D
   return {
     srcDir: context.srcDir,
     rootDir: dirname(context.packageInfo.path),
+    isDevelopment: context.isWatch,
+
     addDependency: (file) => dependencyRecorder.record(file),
 
     url(path): string {

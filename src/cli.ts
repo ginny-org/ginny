@@ -19,7 +19,7 @@ async function run(): Promise<void> {
 async function runWatch(): Promise<void> {
   console.log("Starting ginny in watch mode...\n");
 
-  const context = await create();
+  const context = await create({ isWatch: true });
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });
 
   watcher.on("add", (file) => {

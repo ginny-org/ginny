@@ -10,6 +10,7 @@ export interface Context {
   purgecssConfig: string | null;
   cssNanoConfig: string | null;
   ignoreGlobs: string[];
+  isWatch: boolean;
 }
 
 interface PackageInfo {
@@ -24,7 +25,7 @@ interface PackageInfo {
   };
 }
 
-export async function create(): Promise<Context> {
+export async function create(options: { isWatch: boolean }): Promise<Context> {
   const packageInfo = await findFirstPackageJSON(process.cwd());
 
   if (!packageInfo.ok) {
@@ -56,7 +57,8 @@ export async function create(): Promise<Context> {
     ignoreGlobs,
     generatedFiles: new Set<string>(),
     purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,
-    cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null
+    cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null,
+    isWatch: options.isWatch
   };
 }
 
