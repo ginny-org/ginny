@@ -1,4 +1,4 @@
-import { relative, join, dirname } from "path";
+import { relative, join, dirname, isAbsolute } from "path";
 import { promises } from "fs";
 import * as beautify from "js-beautify";
 
@@ -142,6 +142,8 @@ function createPageContext(file: string, context: Context): PageContext {
     isDevelopment: context.isWatch,
 
     addDependency: (dependency) => record(file, dependency, context),
+
+    resolve: (filepath) => (isAbsolute(filepath) ? filepath : join(dirname(file), filepath)),
 
     url(path): string {
       return join(relpath ?? ".", path);

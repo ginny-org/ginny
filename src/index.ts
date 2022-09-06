@@ -181,6 +181,7 @@ export interface PageContext {
 
   isDevelopment: boolean;
 
+  resolve(filepath: string): string;
   url(path: string): string;
   forFile(file: string): PageContext;
   addDependency(file: string): void;
