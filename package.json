@@ -1,6 +1,6 @@
 {
   "name": "ginny",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Simple static website generator",
   "repository": {
     "url": "https://github.com/jessevdk/ginny"
