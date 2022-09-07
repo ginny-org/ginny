@@ -37,7 +37,7 @@ async function runWatch(): Promise<void> {
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });
 
   watcher.on("add", (file) => {
-    const entries = markChanged(file);
+    const entries = markChanged(file, context);
 
     if (file.startsWith(context.srcDir) && !entries.includes(file)) {
       entries.push(file);
@@ -46,8 +46,8 @@ async function runWatch(): Promise<void> {
     scheduleRun(entries);
   });
 
-  watcher.on("change", (file) => scheduleRun(markChanged(file)));
-  watcher.on("unlink", (file) => scheduleRun(markChanged(file)));
+  watcher.on("change", (file) => scheduleRun(markChanged(file, context)));
+  watcher.on("unlink", (file) => scheduleRun(markChanged(file, context)));
 
   scheduleRun(process.argv.length > 2 ? process.argv.slice(2) : undefined);
 }

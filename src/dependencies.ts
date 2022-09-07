@@ -21,8 +21,12 @@ export function record(entry: string, dependency: string, context: Context): voi
   ensureDependencyToEntries(dependency).add(entry);
 }
 
-export function markChanged(file: string): string[] {
+export function markChanged(file: string, context: Context): string[] {
   clearRequireCache(file);
+
+  if (!file.startsWith(context.srcDir)) {
+    return [];
+  }
 
   // Collect top-level files that transitively depend on this file
   const toplevel = new Set<string>();
