@@ -1,9 +1,6 @@
 import { dirname, join, relative } from "path";
 import * as purgecss from "purgecss";
 import "./register";
-import postcss from "postcss";
-import * as cssnano from "cssnano";
-import * as autoprefixer from "autoprefixer";
 
 import h from "./h";
 import { listAllFiles } from "./fs";
@@ -25,7 +22,7 @@ export async function ginny(options?: Options): Promise<void> {
 
   await runPass(context, options);
 
-  if (context.purgecssConfig && context.packageInfo.json.style) {
+  if (context.purgecssConfig) {
     const purger = new purgecss.PurgeCSS();
     const config = await import(context.purgecssConfig);
     const ret = await purger.purge({
@@ -40,15 +37,6 @@ export async function ginny(options?: Options): Promise<void> {
     });
 
     await Promise.all(ret.filter((v) => !!v.file).map(({ file, css }) => promises.writeFile(file ?? "", css)));
-  }
-
-  if (context.cssNanoConfig && context.packageInfo.json.style) {
-    const css = await promises.readFile(context.packageInfo.json.style);
-    const ret = await postcss([cssnano(await import(context.cssNanoConfig)), autoprefixer()]).process(css, {
-      from: undefined,
-      map: false
-    });
-    await promises.writeFile(context.packageInfo.json.style, ret.css);
   }
 }
 
@@ -176,15 +164,39 @@ declare global {
 (global as any).Ginny = { h };
 
 export interface PageContext {
+  /** The source directory of the main tsx entry point. */
   srcDir: string;
+
+  /** The root directory of the project. */
   rootDir: string;
 
+  /** Whether ginny is running in development (aka watch) mode. */
   isDevelopment: boolean;
 
+  /**
+   * Resolves a filepath to an absolute path. Relative file paths
+   * are resolved relative to the .tsx file location.
+   */
   resolve(filepath: string): string;
+
+  /**
+   * Returns a path that can be used as a (relative) url from the
+   * generated page to an external resource (e.g. an image).
+   */
   url(path: string): string;
+
+  /**
+   * Creates a new page context for a different file. This can be
+   * useful when generating multiple pages (e.g. in separate folders).
+   */
   forFile(file: string): PageContext;
-  addDependency(file: string): void;
+
+  /**
+   * Registers an external file that is a dependency of the page.
+   * This is used in watch mode to trigger regeneration of files
+   * when dependencies change.
+   */
+  addDependency(dependency: string): void;
 }
 
 export interface Options {

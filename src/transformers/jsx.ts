@@ -73,9 +73,9 @@ async function run(file: string, relpath: string, context: Context): Promise<Tra
     return makeErrorResult(file, ret.error);
   }
 
-  const func = ret.value.default;
+  const func = ret.value?.default;
 
-  if (!ret.value || !func || typeof func !== "function") {
+  if (!func || typeof func !== "function") {
     log.processed(relpath);
     return {};
   }
