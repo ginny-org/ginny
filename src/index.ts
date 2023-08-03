@@ -17,6 +17,9 @@ import { getEntries, getRelations } from "./dependencies";
 
 export const createContext = create;
 
+/**
+ * Run the ginny site generator.
+ */
 export async function ginny(options?: Options): Promise<void> {
   const context = await create({ isWatch: !!options?.watch });
 
@@ -163,6 +166,9 @@ declare global {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).Ginny = { h };
 
+/**
+ * Context containing properties and convenience methods related to the static site.
+ */
 export interface PageContext {
   /** The source directory of the main tsx entry point. */
   srcDir: string;
@@ -199,9 +205,20 @@ export interface PageContext {
   addDependency(dependency: string): void;
 }
 
+/**
+ * Ginny site generator options.
+ */
 export interface Options {
+  /**
+   * Files that are part of the site. Defaults to all files in the directory where the main
+   * file lives.
+   */
   files?: string[];
+
+  /** Enable watch mode. Defaults to false. */
   watch?: boolean;
+
+  /** Generate a dependency graph. Defaults to false. */
   dependencyGraph?: boolean;
 }
 

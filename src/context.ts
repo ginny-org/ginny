@@ -26,6 +26,9 @@ interface PackageInfo {
   };
 }
 
+/**
+ * Create a new ginny context.
+ */
 export async function create(options: { isWatch: boolean }): Promise<Context> {
   const packageInfo = await findFirstPackageJSON(process.cwd());
 
