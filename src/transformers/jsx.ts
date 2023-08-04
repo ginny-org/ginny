@@ -15,6 +15,7 @@ import { register, unregister } from "../dependencies";
 export interface PageResult {
   filename: string;
   content: Promise<Ginny.Node> | Ginny.Node;
+  postProcess?(html: string): Promise<string> | string;
 }
 
 export interface MultiPageResult {
@@ -89,14 +90,18 @@ async function run(file: string, relpath: string, context: Context): Promise<Tra
     return makeErrorResult(file, err as Error);
   }
 
-  const outPages =
+  const outPages: { dest: string; content: string; postProcess?(html: string): Promise<string> | string }[] =
     "text" in generated
       ? [{ dest: relpath, content: generated.text }]
       : "filename" in generated
-      ? [{ dest: generated.filename, content: (await generated.content).text }]
+      ? [{ dest: generated.filename, content: (await generated.content).text, postProcess: generated.postProcess }]
       : "pages" in generated
       ? await Promise.all(
-          generated.pages.map(async (page) => ({ dest: page.filename, content: (await page.content).text }))
+          generated.pages.map(async (page) => ({
+            dest: page.filename,
+            content: (await page.content).text,
+            postProcess: page.postProcess
+          }))
         )
       : [];
 
@@ -107,15 +112,19 @@ async function run(file: string, relpath: string, context: Context): Promise<Tra
   }
 
   await Promise.all(
-    outPages.map(async ({ content, dest }) => {
+    outPages.map(async ({ content, dest, postProcess }) => {
       const contentWithDocType = `<!doctype html>
 ${content}`;
 
-      const html = beautify.html_beautify(contentWithDocType, {
-        end_with_newline: true,
-        indent_size: 2,
-        indent_with_tabs: false
-      });
+      const process = postProcess ?? ((html: string) => html);
+
+      const html = await process(
+        beautify.html_beautify(contentWithDocType, {
+          end_with_newline: true,
+          indent_size: 2,
+          indent_with_tabs: false
+        })
+      );
 
       const destPath = join(context.outDir, dest).replace(/\.[jt]sx$/, ".html");
       const destDir = dirname(destPath);

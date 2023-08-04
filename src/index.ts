@@ -17,6 +17,8 @@ import { getEntries, getRelations } from "./dependencies";
 
 export const createContext = create;
 
+export type { PageResult, MultiPageResult } from "./transformers/jsx";
+
 /**
  * Run the ginny site generator.
  */
