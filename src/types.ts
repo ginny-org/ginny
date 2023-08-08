@@ -929,6 +929,7 @@ export namespace Ginny {
     allowTransparency?: boolean;
     frameBorder?: number | string;
     height?: number | string;
+    loading?: "eager" | "lazy";
     marginHeight?: number;
     marginWidth?: number;
     name?: string;
