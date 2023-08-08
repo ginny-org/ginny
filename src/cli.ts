@@ -68,28 +68,30 @@ async function runWatch(options: CliOptions): Promise<void> {
       entries.push(file);
     }
 
-    scheduleRun(entries);
+    scheduleRun(options, entries);
   });
 
-  watcher.on("change", (file) => scheduleRun(markChanged(file, context)));
-  watcher.on("unlink", (file) => scheduleRun(markChanged(file, context)));
+  watcher.on("change", (file) => scheduleRun(options, markChanged(file, context)));
+  watcher.on("unlink", (file) => scheduleRun(options, markChanged(file, context)));
 
-  scheduleRun(options.files.length > 0 ? options.files : undefined);
+  scheduleRun(options, options.files.length > 0 ? options.files : undefined);
 }
 
 let running = new Promise<void>((resolve) => resolve());
 
-function scheduleRun(files: string[] | undefined): void {
+function scheduleRun(options: CliOptions, files: string[] | undefined): void {
   if (files?.length === 0) {
     return;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  running = running.then(() => ginny({ files, watch: true }).catch(() => {}));
+  running = running.then(() => ginny({ files, watch: options.watch, production: options.production }).catch(() => {}));
 }
 
 async function runDependencyGraph(options: CliOptions): Promise<void> {
   return ginny({
+    watch: false,
+    production: options.production,
     files: options.files.length > 0 ? options.files : undefined,
     dependencyGraph: true
   });
@@ -97,6 +99,8 @@ async function runDependencyGraph(options: CliOptions): Promise<void> {
 
 async function runBuild(options: CliOptions): Promise<void> {
   return ginny({
+    watch: false,
+    production: options.production,
     files: options.files.length > 0 ? options.files : undefined
   });
 }
