@@ -24,13 +24,13 @@ export function record(entry: string, dependency: string, context: Context): voi
 export function markChanged(file: string, context: Context): string[] {
   clearRequireCache(file);
 
-  if (!file.startsWith(context.srcDir)) {
-    return [];
-  }
-
   // Collect top-level files that transitively depend on this file
   const toplevel = new Set<string>();
   getToplevelDependents(file, toplevel);
+
+  if (toplevel.size <= 1 && !file.startsWith(context.srcDir)) {
+    return [];
+  }
 
   // Delete dependencies for this file
   entryToDependencies.get(file)?.forEach((dependency) => {
