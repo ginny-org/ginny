@@ -5,31 +5,58 @@ import { watch } from "chokidar";
 import { create } from "./context";
 import { markChanged } from "./dependencies";
 import { setupServer } from "./server";
+import * as yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
-async function run(): Promise<void> {
-  const watchArgIndex = process.argv.indexOf("--watch");
-
-  if (watchArgIndex !== -1) {
-    process.argv.splice(watchArgIndex, 1);
-    await runWatch();
-    return;
-  }
-
-  const dependencyGraphIndex = process.argv.indexOf("--dependency-graph");
-
-  if (dependencyGraphIndex !== -1) {
-    process.argv.splice(watchArgIndex, 1);
-    await runDependencyGraph();
-    return;
-  }
-
-  await runBuild();
+interface CliOptions {
+  watch: boolean;
+  production: boolean;
+  dependencyGraph: boolean;
+  files: string[];
 }
 
-async function runWatch(): Promise<void> {
+async function run(): Promise<void> {
+  const argv = await yargs(hideBin(process.argv))
+    .option("watch", {
+      type: "boolean",
+      default: false,
+      description: "Run in watch mode"
+    })
+    .option("production", {
+      type: "boolean",
+      default: false,
+      description:
+        "Enable production environment. This is made available to the tsx context to conditionally generate different content depending on the environment."
+    })
+    .option("dependency-graph", { type: "boolean", default: false, hidden: true })
+    .usage("$0 [options] [...files]")
+    .help()
+    .parseAsync();
+
+  const options: CliOptions = {
+    production: argv.production,
+    watch: argv.watch,
+    dependencyGraph: argv.dependencyGraph,
+    files: argv._.map((v) => `${v}`)
+  };
+
+  if (options.dependencyGraph) {
+    await runDependencyGraph(options);
+    return;
+  }
+
+  if (options.watch) {
+    await runWatch(options);
+    return;
+  }
+
+  await runBuild(options);
+}
+
+async function runWatch(options: CliOptions): Promise<void> {
   console.log("Starting ginny in watch mode...\n");
 
-  const context = await create({ isWatch: true });
+  const context = await create({ isWatch: true, isProduction: options.production });
   setupServer(context);
 
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });
@@ -47,7 +74,7 @@ async function runWatch(): Promise<void> {
   watcher.on("change", (file) => scheduleRun(markChanged(file, context)));
   watcher.on("unlink", (file) => scheduleRun(markChanged(file, context)));
 
-  scheduleRun(process.argv.length > 2 ? process.argv.slice(2) : undefined);
+  scheduleRun(options.files.length > 0 ? options.files : undefined);
 }
 
 let running = new Promise<void>((resolve) => resolve());
@@ -61,16 +88,16 @@ function scheduleRun(files: string[] | undefined): void {
   running = running.then(() => ginny({ files, watch: true }).catch(() => {}));
 }
 
-async function runDependencyGraph(): Promise<void> {
+async function runDependencyGraph(options: CliOptions): Promise<void> {
   return ginny({
-    files: process.argv.length > 2 ? process.argv.slice(2) : undefined,
+    files: options.files.length > 0 ? options.files : undefined,
     dependencyGraph: true
   });
 }
 
-async function runBuild(): Promise<void> {
+async function runBuild(options: CliOptions): Promise<void> {
   return ginny({
-    files: process.argv.length > 2 ? process.argv.slice(2) : undefined
+    files: options.files.length > 0 ? options.files : undefined
   });
 }
 

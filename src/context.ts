@@ -12,6 +12,7 @@ export interface Context {
   cssNanoConfig: string | null;
   ignoreGlobs: string[];
   isWatch: boolean;
+  isProduction: boolean;
 }
 
 interface PackageInfo {
@@ -26,10 +27,15 @@ interface PackageInfo {
   };
 }
 
+interface Options {
+  isWatch: boolean;
+  isProduction: boolean;
+}
+
 /**
  * Create a new ginny context.
  */
-export async function create(options: { isWatch: boolean }): Promise<Context> {
+export async function create(options: Options): Promise<Context> {
   const packageInfo = await findFirstPackageJSON(process.cwd());
 
   if (!packageInfo.ok) {
@@ -63,7 +69,8 @@ export async function create(options: { isWatch: boolean }): Promise<Context> {
     generatedFiles: new Set<string>(),
     purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,
     cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null,
-    isWatch: options.isWatch
+    isWatch: options.isWatch,
+    isProduction: options.isProduction
   };
 }
 

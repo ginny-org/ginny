@@ -23,7 +23,7 @@ export type { PageResult, MultiPageResult } from "./transformers/jsx";
  * Run the ginny site generator.
  */
 export async function ginny(options?: Options): Promise<void> {
-  const context = await create({ isWatch: !!options?.watch });
+  const context = await create({ isWatch: !!options?.watch, isProduction: !!options?.production });
 
   await runPass(context, options);
 
@@ -178,8 +178,11 @@ export interface PageContext {
   /** The root directory of the project. */
   rootDir: string;
 
-  /** Whether ginny is running in development (aka watch) mode. */
-  isDevelopment: boolean;
+  /** Whether ginny is running in watch mode. */
+  isWatch: boolean;
+
+  /** Whether targetting a production environment. */
+  isProduction: boolean;
 
   /**
    * Resolves a filepath to an absolute path. Relative file paths
@@ -219,6 +222,9 @@ export interface Options {
 
   /** Enable watch mode. Defaults to false. */
   watch?: boolean;
+
+  /** Enable production environment. Defaults to false. */
+  production?: boolean;
 
   /** Generate a dependency graph. Defaults to false. */
   dependencyGraph?: boolean;
