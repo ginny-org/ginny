@@ -63,16 +63,16 @@ async function run<Content>(
   const outPages: { dest: string; content: Content }[] =
     generated != null && typeof generated === "object" && "filename" in generated
       ? [{ dest: generated.filename, content: await generated.content }]
-      : generated != null && typeof generated === "object" && "pages" in generated
+      : generated != null && typeof generated === "object" && "files" in generated
       ? await Promise.all(
-          generated.pages.map(async (page) => ({
+          generated.files.map(async (page) => ({
             dest: page.filename,
             content: await page.content
           }))
         )
       : [{ dest: processor.destFilename(relpath), content: generated }];
 
-  if (generated != null && typeof generated === "object" && "pages" in generated) {
+  if (generated != null && typeof generated === "object" && "files" in generated) {
     for (const page of outPages) {
       log.prepare(page.dest);
     }
@@ -88,7 +88,7 @@ async function run<Content>(
       await promises.mkdir(destDir, { recursive: true });
       await promises.writeFile(destPath, buffer);
 
-      if (generated != null && typeof generated === "object" && "pages" in generated) {
+      if (generated != null && typeof generated === "object" && "files" in generated) {
         log.processed(dest);
       }
     })

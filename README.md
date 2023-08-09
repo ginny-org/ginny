@@ -42,7 +42,7 @@ interface FileResult {
 }
 
 interface MultiFileResult {
-  pages: FileResult[];
+  files: FileResult[];
 }
 ```
 
@@ -56,10 +56,10 @@ Results can either be returned synchronously or asynchronously (using promises).
      content: Promise<Ginny.Node> | Ginny.Node;
    }
    ```
-3. An object specifying multiple pages to output multiple files from a single tsx template.
+3. An object specifying multiple files to output multiple files from a single tsx template.
    ```ts
    export interface MultiFileResult {
-     pages: PageResult[];
+     files: FileResult[];
    }
    ```
 

@@ -6,7 +6,7 @@ export interface FileResult<Content> {
 }
 
 export interface MultiFileResult<Content> {
-  pages: FileResult<Content>[];
+  files: FileResult<Content>[];
 }
 
 export type ContentResult<Content> = Content | FileResult<Content> | MultiFileResult<Content>;
