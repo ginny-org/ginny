@@ -10,7 +10,7 @@ import { hideBin } from "yargs/helpers";
 
 interface CliOptions {
   watch: boolean;
-  production: boolean;
+  environment: string;
   dependencyGraph: boolean;
   files: string[];
 }
@@ -22,11 +22,11 @@ async function run(): Promise<void> {
       default: false,
       description: "Run in watch mode"
     })
-    .option("production", {
-      type: "boolean",
-      default: false,
+    .option("environment", {
+      type: "string",
+      default: "",
       description:
-        "Enable production environment. This is made available to the tsx context to conditionally generate different content depending on the environment."
+        "Set environment. This is passed to the tsx page context to modify content based on a targeted environment (e.g. dev vs production)"
     })
     .option("dependency-graph", { type: "boolean", default: false, hidden: true })
     .usage("$0 [options] [...files]")
@@ -34,7 +34,7 @@ async function run(): Promise<void> {
     .parseAsync();
 
   const options: CliOptions = {
-    production: argv.production,
+    environment: argv.environment,
     watch: argv.watch,
     dependencyGraph: argv.dependencyGraph,
     files: argv._.map((v) => `${v}`)
@@ -56,7 +56,7 @@ async function run(): Promise<void> {
 async function runWatch(options: CliOptions): Promise<void> {
   console.log("Starting ginny in watch mode...\n");
 
-  const context = await create({ isWatch: true, isProduction: options.production });
+  const context = await create({ isWatch: true, environment: options.environment });
   setupServer(context);
 
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });
@@ -85,13 +85,15 @@ function scheduleRun(options: CliOptions, files: string[] | undefined): void {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  running = running.then(() => ginny({ files, watch: options.watch, production: options.production }).catch(() => {}));
+  running = running.then(() =>
+    ginny({ files, watch: options.watch, environment: options.environment }).catch(() => {})
+  );
 }
 
 async function runDependencyGraph(options: CliOptions): Promise<void> {
   return ginny({
     watch: false,
-    production: options.production,
+    environment: options.environment,
     files: options.files.length > 0 ? options.files : undefined,
     dependencyGraph: true
   });
@@ -100,7 +102,7 @@ async function runDependencyGraph(options: CliOptions): Promise<void> {
 async function runBuild(options: CliOptions): Promise<void> {
   return ginny({
     watch: false,
-    production: options.production,
+    environment: options.environment,
     files: options.files.length > 0 ? options.files : undefined
   });
 }

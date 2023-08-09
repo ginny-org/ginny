@@ -12,7 +12,7 @@ export interface Context {
   cssNanoConfig: string | null;
   ignoreGlobs: string[];
   isWatch: boolean;
-  isProduction: boolean;
+  environment: string;
 }
 
 interface PackageInfo {
@@ -29,7 +29,7 @@ interface PackageInfo {
 
 interface Options {
   isWatch: boolean;
-  isProduction: boolean;
+  environment: string;
 }
 
 /**
@@ -70,7 +70,7 @@ export async function create(options: Options): Promise<Context> {
     purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,
     cssNanoConfig: existsSync(cssNanoConfig) ? cssNanoConfig : null,
     isWatch: options.isWatch,
-    isProduction: options.isProduction
+    environment: options.environment
   };
 }
 

@@ -149,7 +149,7 @@ function createPageContext(file: string, context: Context): PageContext {
     srcDir: context.srcDir,
     rootDir: dirname(context.packageInfo.path),
     isWatch: context.isWatch,
-    isProduction: context.isProduction,
+    environment: context.environment,
 
     addDependency: (dependency) => record(file, dependency, context),
 
