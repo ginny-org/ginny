@@ -1,6 +1,8 @@
 import * as jsx from "./jsx";
 import * as scss from "./scss";
 import * as ts from "./ts";
+import * as gjs from "./gjs";
+
 import { Context } from "../context";
 import { TransformError } from "./support/error";
 
@@ -15,7 +17,7 @@ export class NoTransformerError extends Error {
 }
 
 export type Transformer = (filename: string, context: Context) => Promise<TransformResult>;
-const transformers = [jsx, scss, ts];
+const transformers = [jsx, scss, gjs, ts];
 
 export function process(filename: string, context: Context): Promise<TransformResult> {
   for (const transformer of transformers) {

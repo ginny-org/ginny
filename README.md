@@ -29,20 +29,20 @@ After this, use `npx ginny` to do a one time build of your site, or `npx ginny -
 
 ## jsx/tsx transformer
 
-tsx files are transformed to html files by invoking a `default export` render function that should return a `tsx` node. The render function receives a [context](#pagecontext) that provides convenience functionality to add dependencies, resolve relative file paths, etc.
+tsx files are transformed to html files by invoking a `default export` render function that should return a `tsx` node. The render function receives a [context](#contentcontext) that provides convenience functionality to add dependencies, resolve relative file paths, etc.
 
 ```ts
-type RenderFunction = (context: PageContext) => RenderResult | Promise<RenderResult>;
+type RenderFunction = (context: ContentContext) => RenderResult | Promise<RenderResult>;
 
-type RenderResult = Ginny.Node | PageResult | MultiPageResult;
+type RenderResult = Ginny.Node | FileResult | MultiFileResult;
 
-interface PageResult {
+interface FileResult {
   filename: string;
   content: Promise<Ginny.Node> | Ginny.Node;
 }
 
-interface MultiPageResult {
-  pages: PageResult[];
+interface MultiFileResult {
+  pages: FileResult[];
 }
 ```
 
@@ -51,26 +51,26 @@ Results can either be returned synchronously or asynchronously (using promises).
 1. A single tsx node. In this case a corresponding .html file will be created with the contents of the node.
 2. An object specifying a different output filename and the node (or promise resolving to a node) to render to that filename.
    ```ts
-   export interface PageResult {
+   export interface FileResult {
      filename: string;
      content: Promise<Ginny.Node> | Ginny.Node;
    }
    ```
 3. An object specifying multiple pages to output multiple files from a single tsx template.
    ```ts
-   export interface MultiPageResult {
+   export interface MultiFileResult {
      pages: PageResult[];
    }
    ```
 
-The third type of output is useful to generate multiple pages from a set of sources (e.g. from a database, JSON files or markdown files).
+The third type of output is useful to generate multiple files from a set of sources (e.g. from a database, JSON files or markdown files).
 
-### PageContext
+### ContentContext
 
-All tsx render functions get a page context with the following interface:
+All tsx render functions get a content context with the following interface:
 
 ```ts
-interface PageContext {
+interface ContentContext {
   /** The source directory of the main tsx entry point. */
   srcDir: string;
 
@@ -91,18 +91,18 @@ interface PageContext {
 
   /**
    * Returns a path that can be used as a (relative) url from the
-   * generated page to an external resource (e.g. an image).
+   * generated content to an external resource (e.g. an image).
    */
   url(path: string): string;
 
   /**
-   * Creates a new page context for a different file. This can be
-   * useful when generating multiple pages (e.g. in separate folders).
+   * Creates a new content context for a different file. This can be
+   * useful when generating multiple files (e.g. in separate folders).
    */
-  forFile(file: string): PageContext;
+  forFile(file: string): ContentContext;
 
   /**
-   * Registers an external file that is a dependency of the page.
+   * Registers an external file that is a dependency of the content.
    * This is used in watch mode to trigger regeneration of files
    * when dependencies change.
    */

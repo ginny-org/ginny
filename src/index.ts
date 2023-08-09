@@ -17,7 +17,10 @@ import { getEntries, getRelations } from "./dependencies";
 
 export const createContext = create;
 
-export type { PageResult, MultiPageResult } from "./transformers/jsx";
+export type { FileResult, MultiFileResult, ContentFunction } from "./transformers/support/content";
+export type { ContentContext } from "./transformers/support/ContentContext";
+export type { Content as ContentJSX } from "./transformers/jsx";
+export type { Content as ContentGJS } from "./transformers/gjs";
 
 /**
  * Run the ginny site generator.
@@ -167,48 +170,6 @@ declare global {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).Ginny = { h };
-
-/**
- * Context containing properties and convenience methods related to the static site.
- */
-export interface PageContext {
-  /** The source directory of the main tsx entry point. */
-  srcDir: string;
-
-  /** The root directory of the project. */
-  rootDir: string;
-
-  /** Whether ginny is running in watch mode. */
-  isWatch: boolean;
-
-  /** The target environment as provided by the user. */
-  environment: string;
-
-  /**
-   * Resolves a filepath to an absolute path. Relative file paths
-   * are resolved relative to the .tsx file location.
-   */
-  resolve(filepath: string): string;
-
-  /**
-   * Returns a path that can be used as a (relative) url from the
-   * generated page to an external resource (e.g. an image).
-   */
-  url(path: string): string;
-
-  /**
-   * Creates a new page context for a different file. This can be
-   * useful when generating multiple pages (e.g. in separate folders).
-   */
-  forFile(file: string): PageContext;
-
-  /**
-   * Registers an external file that is a dependency of the page.
-   * This is used in watch mode to trigger regeneration of files
-   * when dependencies change.
-   */
-  addDependency(dependency: string): void;
-}
 
 /**
  * Ginny site generator options.
