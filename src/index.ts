@@ -14,13 +14,37 @@ import { process as processCopy } from "./transformers/copy";
 import { TransformError } from "./transformers/support/error";
 import { isMatch } from "micromatch";
 import { getEntries, getRelations } from "./dependencies";
+import type { ContentFunction, ContentResult, FileResult, MultiFileResult } from "./transformers/support/content";
+import type { Content as ContentJSX } from "./transformers/jsx";
+import type { Content as ContentGJS } from "./transformers/gjs";
 
 export const createContext = create;
 
-export type { FileResult, MultiFileResult, ContentFunction } from "./transformers/support/content";
 export type { ContentContext } from "./transformers/support/ContentContext";
-export type { Content as ContentJSX } from "./transformers/jsx";
-export type { Content as ContentGJS } from "./transformers/gjs";
+
+/** The exported default function signature for .jsx and .tsx files. */
+export type ContentFunctionJSX = ContentFunction<ContentJSX>;
+
+/** The result type of the ContentFunctionJSX signature for .jsx and .tsx files. */
+export type ContentResultJSX = ContentResult<ContentJSX>;
+
+/** The single file result type of the ContentFunctionJSX signature for .jsx and .tsx files. */
+export type FileResultJSX = FileResult<ContentJSX>;
+
+/** The multi file result type of the ContentFunctionJSX signature for .jsx and .tsx files. */
+export type MultiFileResultJSX = MultiFileResult<ContentJSX>;
+
+/** The exported default function signature for .g.js and .g.ts files. */
+export type ContentFunctionGJS = ContentFunction<ContentGJS>;
+
+/** The result type of the ContentFunctionGJS signature for .g.js and .g.ts files. */
+export type ContentResultGJS = ContentResult<ContentGJS>;
+
+/** The single file result type of the ContentFunctionGJS signature for .g.js and .g.ts files. */
+export type FileResultGJS = FileResult<ContentGJS>;
+
+/** The multi file result type of the ContentFunctionGJS signature for .g.js and .g.ts files. */
+export type MultiFileResultGJS = MultiFileResult<ContentGJS>;
 
 /**
  * Run the ginny site generator.

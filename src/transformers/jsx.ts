@@ -3,12 +3,21 @@ import { Ginny } from "../types";
 import type { TransformResult, Transformer } from ".";
 import { runJavascriptPages } from "./support/js";
 
-export interface NodeWithPostprocess {
+/**
+ * Result of the exported default function of a .jsx or .tsx file containing a postprocessing
+ * step for the final generated HTML. This can be used for example to minify or purge CSS considering
+ * the final full HTML content.
+ */
+export interface WithPostprocessContent {
+  /** The jsx/tsx vdom node. */
   node: Ginny.Node;
-  postProcess(html: string): string | Promise<string>;
+
+  /** A postprocess function receiving the HTML of the page. */
+  postprocess(html: string): string | Promise<string>;
 }
 
-export type Content = Ginny.Node | NodeWithPostprocess;
+/** The result of the exported default function of a .jsx or .tsx file. */
+export type Content = Ginny.Node | WithPostprocessContent;
 
 const suffix = /\.[j|t]sx$/;
 
@@ -19,7 +28,7 @@ export function match(filename: string): boolean {
 export const process: Transformer = async (file, context): Promise<TransformResult> => {
   return runJavascriptPages<Content>(file, context, {
     contentToBuffer: async (content) => {
-      const { node, postProcess } = nodeAndPostprocess(content);
+      const { node, postprocess: postProcess } = nodeAndPostprocess(content);
 
       const contentWithDocType = `<!doctype html>
 ${node.text}`;
@@ -38,6 +47,6 @@ ${node.text}`;
   });
 };
 
-function nodeAndPostprocess(content: Content): NodeWithPostprocess {
-  return "postProcess" in content ? content : { node: content, postProcess: (html) => html };
+function nodeAndPostprocess(content: Content): WithPostprocessContent {
+  return "postprocess" in content ? content : { node: content, postprocess: (html) => html };
 }

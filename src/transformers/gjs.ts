@@ -1,6 +1,7 @@
 import type { TransformResult, Transformer } from ".";
 import { runJavascriptPages } from "./support/js";
 
+/** The result of the exported default function of a .jsx or .tsx file. */
 export type Content = string | Buffer;
 
 const suffix = /\.g\.[j|t]s$/;
