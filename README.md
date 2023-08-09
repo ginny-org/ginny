@@ -23,51 +23,109 @@ After this, use `npx ginny` to do a one time build of your site, or `npx ginny -
 
 ## Transformers
 
-- `.jsx` / `.tsx`: jsx and tsx files are transformed by the ginny jsx factory to a corresponding `.html` file, with some additional rules (see [tsx transformers](#tsx-transformer)).
-- `.scss`: scss files are transformed to corresponding css files using `sass`. Partials (sass files starting with `_`) are not copied to the destination.
-- `.ts`: ts files are transformed by `swc` and output as `.js` files.
+- **.jsx, .tsx**
 
-## jsx/tsx transformer
+   These files export a default function that returns a jsx node that will be written as html to the same file with the `.jsx` extension replaced with `.html`. See [jsx, tsx transformer](#jsx-tsx-transformer) for more details.
+
+- **.scss**
+
+   These files are transformed to corresponding css files using `sass`. Partials (sass files starting with `_`) are not copied to the destination.
+
+- **.g.js, .g.ts**
+
+   These are javascript or typescript files that export a default function that returns content to be written to the same file without the `.g.js` extension in the output directory. This can be used to generate multiple resources from one source (e.g. generate multiple sizes or formats of an image), or to generate different text file content based on the environment (e.g. dev vs production). See [gjs, gts transformer](#gjs-gts-transformer) for more details.
+
+- **.ts**
+
+   ts files are transformed by `swc` and output as `.js` files.
+
+### .jsx, .tsx transformer
 
 tsx files are transformed to html files by invoking a `default export` render function that should return a `tsx` node. The render function receives a [context](#contentcontext) that provides convenience functionality to add dependencies, resolve relative file paths, etc.
 
 ```ts
-type RenderFunction = (context: ContentContext) => RenderResult | Promise<RenderResult>;
+type ContentFunctionJSX = (context: ContentContext) => ContentResultJSX | Promise<ContentResultJSX>;
+type ContentResultJSX = ContentJSX | FileResultJSX | MultiFileResultJSX;
+type ContentJSX = Ginny.Node | WithPostprocessContent;
 
-type RenderResult = Ginny.Node | FileResult | MultiFileResult;
-
-interface FileResult {
-  filename: string;
-  content: Promise<Ginny.Node> | Ginny.Node;
+interface WithPostprocessContent {
+  node: Ginny.Node;
+  postprocess(html: string): string | Promise<string>;
 }
 
-interface MultiFileResult {
-  files: FileResult[];
+interface FileResultJSX {
+  filename: string;
+  content: ContentJSX | Promise<ContentJSX>;
+}
+
+interface MultiFileResultJSX {
+  files: FileResultJSX[];
 }
 ```
 
 Results can either be returned synchronously or asynchronously (using promises). There are three different result types:
 
-1. A single tsx node. In this case a corresponding .html file will be created with the contents of the node.
+1. A single jsx node. In this case a corresponding .html file will be created in the output directory with the contents of the node.
 2. An object specifying a different output filename and the node (or promise resolving to a node) to render to that filename.
    ```ts
-   export interface FileResult {
+   interface FileResultJSX {
      filename: string;
-     content: Promise<Ginny.Node> | Ginny.Node;
+     content: ContentJSX | Promise<ContentJSX>;
    }
    ```
-3. An object specifying multiple files to output multiple files from a single tsx template.
+3. An object specifying multiple files to output.
    ```ts
-   export interface MultiFileResult {
-     files: FileResult[];
+   interface MultiFileResultJSX {
+     files: FileResultJSX[];
    }
    ```
 
 The third type of output is useful to generate multiple files from a set of sources (e.g. from a database, JSON files or markdown files).
 
+The content can either be a jsx node, or an object containing the node and a postprocessing function. The postprocessing function can be useful when you want to process the final html, for example to minify it.
+
+### .g.js, .g.ts transformer
+
+.g.js and .g.ts files can generate content for one or more files.
+
+```ts
+type ContentFunctionGJS = (context: ContentContext) => ContentResultGJS | Promise<ContentResultGJS>;
+type ContentResultGJS = ContentGJS | FileResultGJS | MultiFileResultGJS;
+type ContentJSX = string | Buffer;
+
+interface FileResultGJS {
+  filename: string;
+  content: ContentGJS | Promise<ContentGJS>;
+}
+
+interface MultiFileResultGJS {
+  files: FileResultGJS[];
+}
+```
+
+Results can either be returned synchronously or asynchronously (using promises). There are three different result types:
+
+1. A `string` or `Buffer`. In this case a corresponding file (with the `.g.js` extension removed) will be created in the output directory.
+2. An object specifying a different output filename and the file content to write to that file.
+   ```ts
+   interface FileResultGJS {
+     filename: string;
+     content: ContentGJS | Promise<ContentGJS>;
+   }
+   ```
+3. An object specifying multiple files to output.
+   ```ts
+   interface MultiFileResultGJS {
+     files: FileResultGJS[];
+   }
+   ```
+
+The third type of output is useful to generate multiple files from one source, or to generate files with different content depending on the environment.
+
+
 ### ContentContext
 
-All tsx render functions get a content context with the following interface:
+All content functions get a context with the following interface:
 
 ```ts
 interface ContentContext {
