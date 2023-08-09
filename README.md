@@ -27,7 +27,7 @@ After this, use `npx ginny` to do a one time build of your site, or `npx ginny -
 - `.scss`: scss files are transformed to corresponding css files using `sass`. Partials (sass files starting with `_`) are not copied to the destination.
 - `.ts`: ts files are transformed by `swc` and output as `.js` files.
 
-## tsx transformer
+## jsx/tsx transformer
 
 tsx files are transformed to html files by invoking a `default export` render function that should return a `tsx` node. The render function receives a [context](#pagecontext) that provides convenience functionality to add dependencies, resolve relative file paths, etc.
 
@@ -77,8 +77,11 @@ interface PageContext {
   /** The root directory of the project. */
   rootDir: string;
 
-  /** Whether ginny is running in development (aka watch) mode. */
-  isDevelopment: boolean;
+  /** Whether ginny is running in watch mode. */
+  isWatch: boolean;
+
+  /** The target environment as provided by the user. */
+  environment: string;
 
   /**
    * Resolves a filepath to an absolute path. Relative file paths
@@ -112,3 +115,7 @@ interface PageContext {
 - Postcss autoprefixer is used on all css files.
 - If your project contains a `cssnano.config.js` file, then `cssnano` is used on all css files.
 - If your project contains a `purgecss.config.js` file, then `purgecss` is used to remove unused CSS from your site.
+
+## Who is this for?
+
+As is typical for such projects, `ginny` is just for me. However I am happy to share it with anyone who is interested. I think it fills a nice niche of a simple tool for people that are very familiar with the node/js eco system and enjoy using jsx/tsx.

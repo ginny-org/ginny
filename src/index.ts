@@ -181,7 +181,7 @@ export interface PageContext {
   /** Whether ginny is running in watch mode. */
   isWatch: boolean;
 
-  /** The target environment. */
+  /** The target environment as provided by the user. */
   environment: string;
 
   /**
