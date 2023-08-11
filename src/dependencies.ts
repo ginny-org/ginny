@@ -28,7 +28,10 @@ export function markChanged(file: string, context: Context): string[] {
   const toplevel = new Set<string>();
   getToplevelDependents(file, toplevel);
 
-  if (toplevel.size <= 1 && !file.startsWith(context.srcDir)) {
+  const hasSelf = toplevel.has(file);
+  const minEntries = hasSelf ? 2 : 1;
+
+  if (toplevel.size < minEntries && !file.startsWith(context.srcDir)) {
     return [];
   }
 
