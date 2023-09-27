@@ -10,14 +10,14 @@ import { runJavascriptPages } from "./support/js";
  */
 export interface WithPostprocessContent {
   /** The jsx/tsx vdom node. */
-  node: Ginny.Node;
+  node: Ginny.Node | Promise<Ginny.Node>;
 
   /** A postprocess function receiving the HTML of the page. */
   postprocess(html: string): string | Promise<string>;
 }
 
 /** The result of the exported default function of a .jsx or .tsx file. */
-export type Content = Ginny.Node | WithPostprocessContent;
+export type Content = Ginny.Node | Promise<Ginny.Node> | WithPostprocessContent;
 
 const suffix = /\.[j|t]sx$/;
 
@@ -30,8 +30,10 @@ export const process: Transformer = async (file, context): Promise<TransformResu
     contentToBuffer: async (content) => {
       const { node, postprocess: postProcess } = nodeAndPostprocess(content);
 
+      const text = (await node).text;
+
       const contentWithDocType = `<!doctype html>
-${node.text}`;
+${text}`;
 
       const html = await postProcess(
         beautify.html_beautify(contentWithDocType, {
