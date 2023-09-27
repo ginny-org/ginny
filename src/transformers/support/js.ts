@@ -62,11 +62,11 @@ async function run<Content>(
 
   const outPages: { dest: string; content: Content }[] =
     generated != null && typeof generated === "object" && "filename" in generated
-      ? [{ dest: generated.filename, content: await generated.content }]
+      ? [{ dest: join(dirname(relpath), generated.filename), content: await generated.content }]
       : generated != null && typeof generated === "object" && "files" in generated
       ? await Promise.all(
           generated.files.map(async (page) => ({
-            dest: page.filename,
+            dest: join(dirname(relpath), page.filename),
             content: await page.content
           }))
         )
