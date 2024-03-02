@@ -11,7 +11,8 @@ const contentTypes: Record<string, string> = {
   ".css": "text/css",
   ".json": "application/json",
   ".jpg": "image/jpg",
-  ".jpeg": "image/jpg"
+  ".jpeg": "image/jpg",
+  ".svg": "image/svg+xml"
 };
 
 async function handleRequest(
