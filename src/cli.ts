@@ -12,6 +12,8 @@ interface CliOptions {
   watch: boolean;
   environment: string;
   dependencyGraph: boolean;
+  out: string | undefined;
+  src: string | undefined;
   files: string[];
 }
 
@@ -28,6 +30,17 @@ async function run(): Promise<void> {
       description:
         "Set environment. This is passed to the tsx page context to modify content based on a targeted environment (e.g. dev vs production)"
     })
+    .option("out", {
+      type: "string",
+      default: undefined,
+      description:
+        "Specify a directory where to output the results. This defaults ginny.out or directories.lib in package.json"
+    })
+    .option("src", {
+      type: "string",
+      default: undefined,
+      description: "Specify the source directory. This defaults to ginny.src or main in package.json"
+    })
     .option("dependency-graph", { type: "boolean", default: false, hidden: true })
     .usage("$0 [options] [...files]")
     .help()
@@ -37,6 +50,8 @@ async function run(): Promise<void> {
     environment: argv.environment,
     watch: argv.watch,
     dependencyGraph: argv.dependencyGraph,
+    out: argv.out,
+    src: argv.src,
     files: argv._.map((v) => `${v}`)
   };
 
@@ -56,7 +71,7 @@ async function run(): Promise<void> {
 async function runWatch(options: CliOptions): Promise<void> {
   console.log("Starting ginny in watch mode...\n");
 
-  const context = await create({ isWatch: true, environment: options.environment });
+  const context = await create({ isWatch: true, environment: options.environment, out: options.out, src: options.src });
   setupServer(context);
 
   const watcher = watch(process.cwd(), { ignoreInitial: true, ignored: ["node_modules", ".git", context.outDir] });

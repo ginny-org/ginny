@@ -1,6 +1,6 @@
 import { promises, existsSync } from "fs";
 import { readFile } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, isAbsolute } from "path";
 
 export interface Context {
   packageInfo: PackageInfo;
@@ -24,12 +24,18 @@ interface PackageInfo {
     directories?: {
       lib?: string;
     };
+    ginny?: {
+      out?: string;
+      src?: string;
+    };
   };
 }
 
 interface Options {
   isWatch: boolean;
   environment: string;
+  out: string | undefined;
+  src: string | undefined;
 }
 
 /**
@@ -43,13 +49,22 @@ export async function create(options: Options): Promise<Context> {
     process.exit(1);
   }
 
-  if (!packageInfo.json.main) {
-    console.error("package.json does not specify a main entry point");
+  const src =
+    options.src ?? packageInfo.json.ginny?.src ?? (packageInfo.json.main ? dirname(packageInfo.json.main) : undefined);
+
+  if (!src) {
+    console.error("Please provide a source directory on the cli or in ginny.src or main in package.json");
     process.exit(1);
   }
 
-  const root = join(dirname(packageInfo.path), dirname(packageInfo.json.main));
-  const lib = packageInfo.json.directories?.lib;
+  const root = isAbsolute(src) ? src : join(dirname(packageInfo.path), src);
+
+  const outDir = options.out ?? packageInfo.json.ginny?.out ?? packageInfo.json.directories?.lib;
+
+  if (!outDir) {
+    console.error("Please provide an output directory on the cli or in ginny.out or directories.lib in package.json");
+    process.exit(1);
+  }
 
   const purgecssConfig = join(process.cwd(), "purgecss.config.js");
   const cssNanoConfig = join(process.cwd(), "cssnano.config.js");
@@ -64,7 +79,7 @@ export async function create(options: Options): Promise<Context> {
     packageInfo,
     srcDir: root,
     rootDir: dirname(packageInfo.path),
-    outDir: lib ? join(dirname(packageInfo.path), lib) : root,
+    outDir: isAbsolute(outDir) ? outDir : join(dirname(packageInfo.path), outDir),
     ignoreGlobs,
     generatedFiles: new Set<string>(),
     purgecssConfig: existsSync(purgecssConfig) ? purgecssConfig : null,

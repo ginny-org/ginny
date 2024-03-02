@@ -50,7 +50,12 @@ export type MultiFileResultGJS = MultiFileResult<ContentGJS>;
  * Run the ginny site generator.
  */
 export async function ginny(options?: Options): Promise<void> {
-  const context = await create({ isWatch: !!options?.watch, environment: options?.environment ?? "" });
+  const context = await create({
+    isWatch: !!options?.watch,
+    environment: options?.environment ?? "",
+    out: options?.out,
+    src: options?.src
+  });
 
   await runPass(context, options);
 
@@ -210,6 +215,12 @@ export interface Options {
 
   /** The target environment. */
   environment?: string;
+
+  /** The source directory. */
+  src?: string;
+
+  /** The output directory. */
+  out?: string;
 
   /** Generate a dependency graph. Defaults to false. */
   dependencyGraph?: boolean;
