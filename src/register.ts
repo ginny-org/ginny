@@ -1,23 +1,13 @@
-import { default as register, InputOptions } from "@swc/register/lib/node";
+import { register } from "@swc-node/register/register";
 import "source-map-support/register";
+import ts = require("typescript");
 
-const opts: InputOptions = {
+const opts: Partial<ts.CompilerOptions> = {
   extensions: [".ts", ".tsx", ".jsx"],
   sourceMaps: true,
-  jsc: {
-    parser: {
-      syntax: "typescript",
-      tsx: true
-    },
-    transform: {
-      react: {
-        pragma: "Ginny.h"
-      }
-    }
-  },
-  module: {
-    type: "commonjs"
-  }
+  jsxFactory: "Ginny.h",
+  jsx: ts.JsxEmit.React,
+  module: ts.ModuleKind.CommonJS
 };
 
 register(opts);
