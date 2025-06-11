@@ -64,13 +64,13 @@ async function run<Content>(
     generated != null && typeof generated === "object" && "filename" in generated
       ? [{ dest: join(dirname(relpath), generated.filename), content: await generated.content }]
       : generated != null && typeof generated === "object" && "files" in generated
-      ? await Promise.all(
-          generated.files.map(async (page) => ({
-            dest: join(dirname(relpath), page.filename),
-            content: await page.content
-          }))
-        )
-      : [{ dest: processor.destFilename(relpath), content: generated }];
+        ? await Promise.all(
+            generated.files.map(async (page) => ({
+              dest: join(dirname(relpath), page.filename),
+              content: await page.content
+            }))
+          )
+        : [{ dest: processor.destFilename(relpath), content: generated }];
 
   if (generated != null && typeof generated === "object" && "files" in generated) {
     for (const page of outPages) {

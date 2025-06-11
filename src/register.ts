@@ -1,6 +1,6 @@
 import { register } from "@swc-node/register/register";
 import "source-map-support/register";
-import ts = require("typescript");
+import * as ts from "typescript";
 
 const opts: Partial<ts.CompilerOptions> = {
   extensions: [".ts", ".tsx", ".jsx"],

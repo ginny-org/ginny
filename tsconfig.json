@@ -10,8 +10,5 @@
     "jsx": "react",
     "jsxFactory": "Ginny.h"
   },
-  "include": [
-    "src/index.ts",
-    "src/cli.ts"
-  ]
+  "include": ["src/index.ts", "src/cli.ts"]
 }

@@ -22,7 +22,7 @@ export interface h {
     props?: (Ginny.Attributes & P) | null,
     ...children: Ginny.OutputType[]
   ): Ginny.OutputType;
-  <P extends unknown>(
+  <P>(
     type: FunctionComponent<P>,
     props?: (Ginny.Attributes & P) | null,
     ...children: Ginny.OutputType[]

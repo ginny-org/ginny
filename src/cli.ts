@@ -99,7 +99,6 @@ function scheduleRun(options: CliOptions, files: string[] | undefined): void {
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   running = running.then(() =>
     ginny({ files, watch: options.watch, environment: options.environment }).catch(() => {})
   );

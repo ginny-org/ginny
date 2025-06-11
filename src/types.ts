@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-namespace */
 import * as CSS from "csstype";
 import * as PropTypes from "prop-types";
@@ -94,7 +92,7 @@ export namespace Ginny {
    * This might be a child element to the element on which the event listener is registered.
    * If you thought this should be `EventTarget & T`, see https://github.com/DefinitelyTyped/DefinitelyTyped/pull/12239
    */
-  interface SyntheticEvent<T = Element, E = Event> extends BaseSyntheticEvent<E, EventTarget & T, EventTarget> {}
+  type SyntheticEvent<T = Element, E = Event> = BaseSyntheticEvent<E, EventTarget & T, EventTarget>;
 
   interface ClipboardEvent<T = Element> extends SyntheticEvent<T, NativeClipboardEvent> {
     clipboardData: DataTransfer;
@@ -126,8 +124,7 @@ export namespace Ginny {
     target: EventTarget & T;
   }
 
-  // tslint:disable-next-line:no-empty-interface
-  interface FormEvent<T = Element> extends SyntheticEvent<T> {}
+  type FormEvent<T = Element> = SyntheticEvent<T>;
 
   interface ChangeEvent<T = Element> extends SyntheticEvent<T> {
     target: EventTarget & T;
@@ -438,16 +435,15 @@ export namespace Ginny {
     onTransitionEndCapture?: TransitionEventHandler<T>;
   }
 
-  export interface CSSProperties extends CSS.Properties<string | number> {
-    /**
-     * The index signature was removed to enable closed typing for style
-     * using CSSType. You're able to use type assertion or module augmentation
-     * to add properties or an index signature of your own.
-     *
-     * For examples and more information, visit:
-     * https://github.com/frenic/csstype#what-should-i-do-when-i-get-type-errors
-     */
-  }
+  /**
+   * The index signature was removed to enable closed typing for style
+   * using CSSType. You're able to use type assertion or module augmentation
+   * to add properties or an index signature of your own.
+   *
+   * For examples and more information, visit:
+   * https://github.com/frenic/csstype#what-should-i-do-when-i-get-type-errors
+   */
+  export type CSSProperties = CSS.Properties<string | number>;
 
   // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
   interface AriaAttributes {
@@ -827,7 +823,7 @@ export namespace Ginny {
     referrerPolicy?: string;
   }
 
-  export interface AudioHTMLAttributes<T> extends MediaHTMLAttributes<T> {}
+  export type AudioHTMLAttributes<T> = MediaHTMLAttributes<T>;
 
   export interface AreaHTMLAttributes<T> extends HTMLAttributes<T> {
     alt?: string;
@@ -1721,7 +1717,7 @@ export namespace Ginny {
   // Ginny.PropTypes
   // ----------------------------------------------------------------------
 
-  type Validator<T> = PropTypes.Validator<T>;
+  export type Validator<T> = PropTypes.Validator<T>;
 
   //
   // Browser Interfaces
@@ -1755,14 +1751,14 @@ export namespace Ginny {
 declare global {
   namespace JSX {
     interface ElementAttributesProperty {
-      props: {};
+      props: object;
     }
     interface ElementChildrenAttribute {
-      children: {};
+      children: object;
     }
 
-    interface IntrinsicAttributes extends Ginny.Attributes {}
-    interface IntrinsicClassAttributes extends Ginny.Attributes {}
+    type IntrinsicAttributes = Ginny.Attributes;
+    type IntrinsicClassAttributes = Ginny.Attributes;
 
     interface IntrinsicElements {
       // HTML

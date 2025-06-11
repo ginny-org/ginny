@@ -1,5 +1,9 @@
 export class TransformError {
-  constructor(readonly filename: string, readonly pos: Position, readonly message: string) {}
+  constructor(
+    readonly filename: string,
+    readonly pos: Position,
+    readonly message: string
+  ) {}
 
   toString(): string {
     return `${this.filename}:${this.pos.start.line}:${this.pos.start.col} - ${this.message}`;

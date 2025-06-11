@@ -12,7 +12,7 @@ import type { Transformer, TransformResult } from ".";
 import { TransformError } from "./support/error";
 import { readFile, writeFile } from "fs/promises";
 import { Context } from "../context";
-import postcss = require("postcss");
+import postcss from "postcss";
 
 export function match(filename: string): boolean {
   return /\.(scss|css)$/.test(filename);

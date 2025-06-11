@@ -114,7 +114,7 @@ async function findFirstPackageJSONPath(p: string): Promise<string | null> {
       return fullname;
     }
   } catch (err) {
-    err;
+    console.error(err);
   }
 
   const up = dirname(p);

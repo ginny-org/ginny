@@ -25,19 +25,19 @@ After this, use `npx ginny` to do a one time build of your site, or `npx ginny -
 
 - **.jsx, .tsx**
 
-   These files export a default function that returns a jsx node that will be written as html to the same file with the `.jsx` extension replaced with `.html`. See [jsx, tsx transformer](#jsx-tsx-transformer) for more details.
+  These files export a default function that returns a jsx node that will be written as html to the same file with the `.jsx` extension replaced with `.html`. See [jsx, tsx transformer](#jsx-tsx-transformer) for more details.
 
 - **.scss**
 
-   These files are transformed to corresponding css files using `sass`. Partials (sass files starting with `_`) are not copied to the destination.
+  These files are transformed to corresponding css files using `sass`. Partials (sass files starting with `_`) are not copied to the destination.
 
 - **.g.js, .g.ts**
 
-   These are javascript or typescript files that export a default function that returns content to be written to the same file without the `.g.js` extension in the output directory. This can be used to generate multiple resources from one source (e.g. generate multiple sizes or formats of an image), or to generate different text file content based on the environment (e.g. dev vs production). See [gjs, gts transformer](#gjs-gts-transformer) for more details.
+  These are javascript or typescript files that export a default function that returns content to be written to the same file without the `.g.js` extension in the output directory. This can be used to generate multiple resources from one source (e.g. generate multiple sizes or formats of an image), or to generate different text file content based on the environment (e.g. dev vs production). See [gjs, gts transformer](#gjs-gts-transformer) for more details.
 
 - **.ts**
 
-   ts files are transformed by `swc` and output as `.js` files.
+  ts files are transformed by `swc` and output as `.js` files.
 
 ### .jsx, .tsx transformer
 
@@ -121,7 +121,6 @@ Results can either be returned synchronously or asynchronously (using promises).
    ```
 
 The third type of output is useful to generate multiple files from one source, or to generate files with different content depending on the environment.
-
 
 ### ContentContext
 
