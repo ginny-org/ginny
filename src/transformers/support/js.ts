@@ -99,7 +99,7 @@ async function run<Content>(
 }
 
 function makeErrorResult(filename: string, error: Error): TransformResult {
-  if (error instanceof TypeError) {
+  if ("stack" in error && "message" in error) {
     const stack = error.stack?.toString();
     let location = { line: 0, col: 0 };
     let message = error.message.toString();
@@ -110,6 +110,8 @@ function makeErrorResult(filename: string, error: Error): TransformResult {
       if (m && m[2].endsWith(filename)) {
         location = { line: parseInt(m[3], 10), col: parseInt(m[4], 10) };
         message = `at ${m[1].trim()}: ${message}`;
+      } else {
+        message = stack;
       }
     }
 
